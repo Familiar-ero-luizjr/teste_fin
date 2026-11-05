@@ -1,0 +1,161 @@
+/* Tokens visuais do Enjoy Gestão. Fonte: design system do baseline, preservado sem lógica de negócio. */
+:root {
+  color-scheme: light;
+
+  /* Typography */
+  --font-family-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-md: 15px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 22px;
+  --font-size-4xl: 27px;
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.35;
+  --line-height-body: 1.5;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-strong: 800;
+
+  /* Spacing — 2px base, 4px rhythm */
+  --space-0: 0;
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-3-5: 14px;
+  --space-4: 16px;
+  --space-4-5: 18px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+
+  /* Radius */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --radius-pill: 999px;
+
+  /* Control density */
+  --control-height-compact: 34px;
+  --control-height-sm: 36px;
+  --control-height-md: 40px;
+  --control-height-lg: 46px;
+  --touch-target-min: 44px;
+
+  /* Neutral / surface */
+  --color-white: #ffffff;
+  --color-canvas: #f4f5f3;
+  --color-surface-subtle: #fbfcfb;
+  --color-surface-hover: #f8faf9;
+  --color-surface-active: #f6f8f7;
+  --color-border-soft: #edf0ee;
+  --color-border: #e2e6e3;
+  --color-border-strong: #ccd7d2;
+  --color-text-strong: #15251f;
+  --color-text: #1e2825;
+  --color-text-secondary: #53605c;
+  --color-text-muted: #71817b;
+  --color-text-faint: #8b9591;
+
+  /* Brand */
+  --color-brand-900: #183d2e;
+  --color-brand-800: #1f4a43;
+  --color-brand-700: #285e54;
+  --color-brand-600: #36705d;
+  --color-brand-500: #78a294;
+  --color-brand-300: #9fc2b8;
+  --color-brand-200: #d8e7e2;
+  --color-brand-100: #eaf2ef;
+  --color-brand-50: #f4f8f6;
+
+  /* Semantic states */
+  --color-success-700: #247153;
+  --color-success-600: #2f8a66;
+  --color-success-100: #eaf6f0;
+  --color-danger-700: #a34f49;
+  --color-danger-600: #c75c52;
+  --color-danger-200: #efd0cd;
+  --color-danger-100: #faeeec;
+  --color-danger-50: #fff9f8;
+  --color-warning-800: #5b4b11;
+  --color-warning-700: #946d28;
+  --color-warning-500: #c7924c;
+  --color-warning-300: #e8cf72;
+  --color-warning-200: #ead9bd;
+  --color-warning-100: #fff6e3;
+  --color-warning-50: #fffdf8;
+  --color-info-700: #5b6d7d;
+  --color-info-100: #eef2f6;
+  --color-accent-700: #765b86;
+  --color-accent-100: #f3eef7;
+
+  /* RGB channels used for translucency without recreating colors per module */
+  --rgb-brand: 40 94 84;
+  --rgb-brand-strong: 24 61 46;
+  --rgb-success: 36 113 83;
+  --rgb-shadow: 31 44 39;
+  --rgb-overlay: 20 34 29;
+  --rgb-canvas: 244 245 243;
+
+  /* Shadows */
+  --shadow-none: none;
+  --shadow-xs: 0 1px 3px rgb(var(--rgb-shadow) / 0.12);
+  --shadow-sm: 0 2px 6px rgb(var(--rgb-shadow) / 0.08);
+  --shadow-card: 0 8px 28px rgb(var(--rgb-shadow) / 0.05);
+  --shadow-popover: 0 10px 30px rgb(var(--rgb-shadow) / 0.15);
+  --shadow-float: 0 5px 16px rgb(var(--rgb-shadow) / 0.14);
+  --shadow-dialog: 0 24px 70px rgb(var(--rgb-overlay) / 0.24);
+  --shadow-sidebar: 2px 0 8px -5px rgb(var(--rgb-shadow) / 0.18);
+  --shadow-sidebar-mobile: 8px 0 24px rgb(var(--rgb-shadow) / 0.14);
+
+  /* Interaction */
+  --focus-border: var(--color-brand-500);
+  --focus-ring: 0 0 0 3px rgb(var(--rgb-brand) / 0.10);
+  --transition-fast: 140ms ease;
+  --transition-base: 180ms ease;
+  --transition-slow: 250ms ease;
+
+  /* Layout */
+  --content-max-width: 1450px;
+  --sidebar-width: 256px;
+  --sidebar-width-collapsed: 80px;
+  --topbar-height: 76px;
+  --sidebar-brand-height: 80px;
+
+  /* Compatibility aliases: existing modules can migrate incrementally. */
+  --bg: var(--color-canvas);
+  --panel: var(--color-white);
+  --ink: var(--color-text);
+  --muted: var(--color-text-muted);
+  --line: var(--color-border);
+  --brand: var(--color-brand-700);
+  --brand2: var(--color-brand-800);
+  --brand-dark: var(--color-brand-900);
+  --soft: var(--color-brand-100);
+  --good: var(--color-success-700);
+  --bad: var(--color-danger-700);
+  --warn: var(--color-warning-700);
+  --goodbg: var(--color-success-100);
+  --badbg: var(--color-danger-100);
+  --warnbg: var(--color-warning-100);
+  --r: var(--radius-xl);
+  --shadow: var(--shadow-card);
+}
