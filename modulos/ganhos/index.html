@@ -211,436 +211,84 @@
 
 *{box-sizing:border-box}body{margin:0;padding:28px;background:var(--color-canvas);font-family:var(--font-family-sans);font-size:14px;color:var(--color-text)}button,input,select{font:inherit}button{cursor:pointer}.module-container{max-width:1450px;margin:auto}.toast{position:fixed;bottom:20px;right:20px;background:#183d2e;color:#fff;padding:12px 16px;border-radius:9px;display:none;z-index:100}.toast.visible{display:block}.fv2-dialog-form{margin:0}
 @media(max-width:700px){body{padding:12px}}
-</style></head><body>
+</style>
+<style>
+.gain-modal{width:min(790px,calc(100vw - 24px))}.gain-modal .fv2-fields{max-height:65vh;overflow:auto}.gain-modal textarea{min-height:64px;border:1px solid var(--color-border-strong);border-radius:8px;padding:10px;font:inherit}.gain-modal .full{grid-column:1/-1}.gain-inline{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:14px;border-top:1px solid var(--color-border-soft);font-weight:700}.gain-inline small{font-weight:400;color:var(--color-text-muted)}.gain-extra[hidden]{display:none}.gain-item-row{display:grid;grid-template-columns:minmax(0,2fr) 70px 110px auto;gap:6px;margin:8px 0}.gain-payment-row{display:grid;grid-template-columns:135px minmax(80px,1fr) minmax(120px,1fr) minmax(120px,1fr) auto;gap:6px;margin:8px 0}.gain-payment-row input,.gain-payment-row select,.gain-item-row input{width:100%;min-width:0;min-height:38px;border:1px solid var(--color-border-strong);border-radius:8px;padding:7px;background:white}.gain-payment-row .gain-reason{grid-column:1/-1}.gain-summary{padding:12px;background:var(--color-brand-50);border-radius:8px;font-size:12px;line-height:1.7}.gain-error{color:var(--color-danger-700);font-weight:700;font-size:12px}.gain-form-footer{padding:0 24px 16px;display:flex;justify-content:flex-end}.gain-sale-form .fv2-fields{padding-bottom:12px}.gain-note{margin:10px 24px 20px;color:var(--color-text-muted);font-size:12px}.gain-actions{display:flex;gap:9px}.gain-pill{border-radius:99px;padding:5px 8px;font-size:11px;font-weight:700;white-space:nowrap;background:#eef3f1;color:#365f50}.gain-pill.ok{background:#e3f5e9;color:#19764d}.gain-pill.wait{background:#fff5dd;color:#896425}.gain-pill.partial{background:#fff2da;color:#9b641f}.gain-pill.bad{background:#faeceb;color:#a34f49}.gain-checkbox{display:flex!important;align-items:center;gap:9px}.gain-checkbox input{width:auto!important;min-height:0!important}@media(max-width:700px){.gain-payment-row{grid-template-columns:1fr 1fr}.gain-payment-row button{justify-self:start}.gain-item-row{grid-template-columns:1fr 60px 95px auto}.gain-modal .fv2-fields{max-height:65vh}}
+</style>
+</head><body>
 <main class="module-container" id="module-root" aria-label="Módulo Ganhos"></main>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <!-- ÚNICA DEPENDÊNCIA EXTERNA: mock compartilhado com os demais módulos -->
 <script src="../../mock/mock.js"></script>
 <script>
-/* Lógica original do Financeiro V2 incorporada a este módulo. */
-(function financeShared() {
-  "use strict";
-  const key = "enjoy_resumo_movimentacoes_v1";
-  const areas = {
-    overview: { title: "Visão geral", hint: "Todos os lançamentos financeiros por data." },
-    gains: { title: "Ganhos", hint: "Recebimentos de reservas e vendas avulsas, separados pela origem." },
-    sales: { title: "Vendas", hint: "Registre vendas avulsas sem misturá-las aos recebimentos das reservas." },
-    expenses: { title: "Despesas", hint: "Custos e despesas operacionais." },
-    investments: { title: "Investimentos", hint: "Desembolsos classificados como investimento." }
-  };
-  const settings = new Map();
-  const roots = new Map();
-  let listening = false;
-  const curr = () => new Date().toLocaleDateString("en-CA");
-  const money = amount => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(amount) || 0);
-  const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
-  const normalize = value => String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
-  const uid = () => typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const accountLabel = id => window.EnjoyReceipts?.accountName?.(id) || (id ? `Conta ${id}` : "Sem conta informada");
-  const canWrite = () => !!window.EnjoyPermissions?.can?.("modules.write") && !!window.EnjoyAccess?.canModule?.("finance-expenses");
-  const canWriteFor = area => !!window.EnjoyPermissions?.can?.("modules.write") && !!window.EnjoyAccess?.canModule?.(area === "sales" || area === "gains" ? "finance-gains" : "finance-expenses");
-  const source = () => window.EnjoyStore?.read?.(key, []) || [];
-  const accounts = () => window.EnjoyReceipts?.accounts?.() || [];
-  const expenseEnvironments = () => source().map(environment => ({
-    id: String(environment.id || ""),
-    name: String(environment.name || environment.nome || "Sem ambiente"),
-    categories: (environment.categories || environment.categorias || [])
-      .filter(category => category.flow !== "in" && category.classification !== "investment" && !String(category.integrationId || "").startsWith("operation:"))
-      .map(category => ({ id: String(category.id || ""), name: String(category.name || category.nome || "Sem categoria"), classification: category.classification || "expense" }))
-  }));
-  function records() {
-    const result = [];
-    const reservations = window.EnjoyOperationsData?.records?.(window.EnjoyOperationsData?.KEYS?.reservations) || [];
-    for (const environment of source()) {
-      for (const category of environment.categories || environment.categorias || []) {
-        const generated = String(category.integrationId || "").startsWith("operation:");
-        const postings = generated
-          ? Object.entries(category.days || {}).map(([date, amount], index) => ({ date, amount, description: category.name, index }))
-          : Array.isArray(category.entries) && category.entries.length
-          ? category.entries.map((entry, index) => ({ ...entry, index }))
-          : Object.entries(category.days || {}).map(([date, amount], index) => ({ date, amount, description: category.name, index }));
-        const linked = window.EnjoyReceipts?.reservationIdForMovement?.(category, reservations) || category.reservationId || "";
-        const reservation = reservations.find(item => String(item.id) === String(linked));
-        const classification = category.classification || (category.flow === "in" ? "revenue" : "expense");
-        const flow = category.flow === "in" ? "in" : "out";
-        for (const entry of postings) {
-          const amount = Number(entry.amount);
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(String(entry.date || "")) || !Number.isFinite(amount) || amount <= 0) continue;
-          result.push({
-            id: entry.id || "",
-            index: entry.index,
-            environmentId: String(environment.id || ""),
-            categoryId: String(category.id || ""),
-            environment: String(environment.name || environment.nome || "Sem ambiente"),
-            category: String(category.name || category.nome || "Sem categoria"),
-            date: entry.date,
-            description: String(entry.description || category.name || "Lançamento"),
-            accountId: String(entry.accountId || category.accountId || ""),
-            method: String(entry.method || category.method || ""),
-            classification, flow, amount,
-            generated, isSale: category.mode === "sale", groupId: String(entry.groupId || ""),
-            recurrenceId: String(entry.recurrenceId || ""),
-            recurrenceFrequency: String(entry.recurrenceFrequency || ""),
-            recurrenceEndDate: String(entry.recurrenceEndDate || ""),
-            reservationId: String(linked || ""),
-            reservationChannel: reservation?.channel === "Booking" ? "Booking" : "Direta"
-          });
-        }
-      }
-    }
-    return result.sort((a, b) => a.date.localeCompare(b.date) || a.description.localeCompare(b.description, "pt-BR"));
-  }
-  function inArea(row, area) {
-    if (area === "gains") return row.flow === "in" && !row.isSale;
-    if (area === "sales") return row.flow === "in" && row.isSale;
-    if (area === "expenses") return row.flow === "out" && row.classification !== "investment";
-    if (area === "investments") return row.flow === "out" && row.classification === "investment";
-    return true;
-  }
-  function selection(area) {
-    if (!settings.has(area)) settings.set(area, { account: "", environment: "", query: "", period: "all", from: "", to: "", descending: false, recurrenceFrequency: "all" });
-    return settings.get(area);
-  }
-  function matches(row, filter) {
-    if (filter.account && (filter.account === "__none__" ? !!row.accountId : row.accountId !== filter.account)) return false;
-    if (filter.environment && row.environmentId !== filter.environment) return false;
-    const month = new Date().toLocaleDateString("en-CA").slice(0, 7);
-    if (filter.period === "month" && row.date.slice(0, 7) !== month) return false;
-    if (filter.period === "range" && ((filter.from && row.date < filter.from) || (filter.to && row.date > filter.to))) return false;
-    const haystack = normalize([row.description, row.environment, row.category, row.method, row.classification, accountLabel(row.accountId)].join(" "));
-    return !filter.query || haystack.includes(normalize(filter.query));
-  }
-  function filtered(area) {
-    const state = selection(area);
-    const result = records().filter(row => {
-      const recurrenceMatch = area !== "expenses" || state.recurrenceFrequency === "all" || (state.recurrenceFrequency === "daily" ? !row.recurrenceFrequency || row.recurrenceFrequency === "daily" : row.recurrenceFrequency === state.recurrenceFrequency);
-      return inArea(row, area) && matches(row, state) && recurrenceMatch;
-    });
-    return state.descending ? result.reverse() : result;
-  }
-  function totals(rows) {
-    const incoming = rows.filter(row => row.flow === "in").reduce((sum, row) => sum + row.amount, 0);
-    const expenses = rows.filter(row => row.flow === "out" && row.classification !== "investment").reduce((sum, row) => sum + row.amount, 0);
-    const investments = rows.filter(row => row.flow === "out" && row.classification === "investment").reduce((sum, row) => sum + row.amount, 0);
-    return { incoming, expenses, investments, balance: incoming - expenses };
-  }
-  function options(items, current, label, getValue, getTitle) {
-    return `<option value="">${esc(label)}</option>${items.map(item => `<option value="${esc(getValue(item))}" ${String(getValue(item)) === current ? "selected" : ""}>${esc(getTitle(item))}</option>`).join("")}`;
-  }
-  function filtersMarkup(area) {
-    const state = selection(area);
-    const rows = records().filter(row => inArea(row, area));
-    const usedAccounts = new Set(rows.map(row => row.accountId));
-    const accountList = [...accounts(), ...[...usedAccounts].filter(id => id && !accounts().some(item => item.id === id)).map(id => ({ id, name: accountLabel(id) }))].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
-    const environmentRows = rows.filter(row => !state.account || (state.account === "__none__" ? !row.accountId : row.accountId === state.account));
-    const environments = [...new Map(environmentRows.map(row => [row.environmentId, { id: row.environmentId, name: row.environment }])).values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
-    if (state.environment && !environments.some(item => item.id === state.environment)) state.environment = "";
-    return `<div class="fv2-filters" role="search" aria-label="Filtros financeiros">
-      <label>Conta<select data-fv2-filter="account">${options(accountList, state.account, "Todas as contas", item => item.id, item => item.name)}<option value="__none__" ${state.account === "__none__" ? "selected" : ""}>Sem conta informada</option></select></label>
-      <label>Ambiente<select data-fv2-filter="environment">${options(environments, state.environment, "Todos os ambientes", item => item.id, item => item.name)}</select></label>
-      <label class="fv2-search">Buscar<input type="search" data-fv2-filter="query" value="${esc(state.query)}" placeholder="Descrição ou categoria"></label>
-      <label>Período<select data-fv2-filter="period">
-        <option value="all" ${state.period === "all" ? "selected" : ""}>Todas as datas</option>
-        <option value="month" ${state.period === "month" ? "selected" : ""}>Mês atual</option>
-        <option value="range" ${state.period === "range" ? "selected" : ""}>Personalizado</option>
-      </select></label>
-      ${area === "expenses" ? `<label>Frequência<select data-fv2-filter="recurrenceFrequency"><option value="all" ${state.recurrenceFrequency === "all" ? "selected" : ""}>Todos os lançamentos</option><option value="monthly" ${state.recurrenceFrequency === "monthly" ? "selected" : ""}>Mensais</option><option value="weekly" ${state.recurrenceFrequency === "weekly" ? "selected" : ""}>Semanais</option><option value="daily" ${state.recurrenceFrequency === "daily" ? "selected" : ""}>Diários</option></select></label>` : ""}
-      ${state.period === "range" ? `<label>De<input type="date" data-fv2-filter="from" value="${esc(state.from)}"></label><label>Até<input type="date" data-fv2-filter="to" value="${esc(state.to)}"></label>` : ""}
-      <button type="button" class="fv2-button secondary" data-fv2-action="reset">Limpar filtros</button>
-    </div>`;
-  }
-  function tableMarkup(area) {
-    const rows = filtered(area), sum = totals(rows), state = selection(area);
-    const body = rows.map(row => {
-      const title = row.generated ? "Gerado automaticamente; edite a reserva de origem" : row.groupId ? "Lançamento agrupado; edite no módulo original" : "";
-      const action = row.reservationId
-        ? window.EnjoyAccess?.canModule?.("reservations")
-          ? `<button class="fv2-text-button" type="button" data-fv2-action="reservation" data-reservation-id="${esc(row.reservationId)}">Abrir reserva</button>`
-          : '<span class="fv2-muted">Origem: reserva</span>'
-        : row.generated || row.groupId || (row.flow === "in" && !row.isSale) || !canWriteFor(area)
-        ? `<span class="fv2-muted" title="${esc(title)}">—</span>`
-        : `<button class="fv2-text-button" type="button" data-fv2-action="edit" data-environment-id="${esc(row.environmentId)}" data-category-id="${esc(row.categoryId)}" data-entry-index="${row.index}">Editar</button>`;
-      const typeLabel = row.flow === "in" ? "Entrada" : "Saída";
-      const classificationLabel = ({ revenue: "Ganho", cost: "Custo operacional", expense: "Despesa", investment: "Investimento", transfer: "Transferência" })[row.classification] || row.classification;
-      return `<tr><td><time datetime="${esc(row.date)}">${row.date.split("-").reverse().join("/")}</time></td>
-        <td class="fv2-description"><strong>${esc(row.description)}</strong>${row.generated ? '<small>Gerado automaticamente</small>' : ""}</td>
-        <td>${esc(classificationLabel)}</td>
-        <td><span class="fv2-chip">${esc(row.environment)}</span><small>${esc(row.category)}</small></td>
-        <td><span class="fv2-chip">${esc(accountLabel(row.accountId))}</span><small>${esc(row.method || "Não informada")}</small></td>
-        <td><span class="fv2-flow ${row.flow}">${typeLabel}</span></td>
-        <td class="fv2-money in">${row.flow === "in" ? money(row.amount) : "—"}</td>
-        <td class="fv2-money out">${row.flow === "out" ? money(row.amount) : "—"}</td><td>${action}</td></tr>`;
-    }).join("") || '<tr><td colspan="9" class="fv2-empty">Nenhum lançamento corresponde aos filtros selecionados.</td></tr>';
-    const overview = area === "overview" ? `<div class="fv2-cards">
-      <article><small>Saldo operacional</small><strong>${money(sum.balance)}</strong><span>Ganhos menos despesas</span></article>
-      <article><small>Ganhos</small><strong class="fv2-in">${money(sum.incoming)}</strong></article>
-      <article><small>Despesas</small><strong class="fv2-out">${money(sum.expenses)}</strong></article>
-      <article><small>Investimentos</small><strong>${money(sum.investments)}</strong></article>
-    </div>` : "";
-    return `${overview}<div class="fv2-table-heading"><div><h3>Tabela geral</h3><p>${rows.length} ${rows.length === 1 ? "lançamento" : "lançamentos"} · ${state.descending ? "data decrescente" : "data crescente"}</p></div><button type="button" class="fv2-button secondary" data-fv2-action="export">Exportar CSV</button></div>
-      <div class="fv2-scroll" role="region" aria-label="Lançamentos financeiros; rolagem horizontal" tabindex="0">
-        <table class="fv2-table"><thead><tr><th><button type="button" class="fv2-sort" data-fv2-action="sort">Data ${state.descending ? "↓" : "↑"}</button></th><th>Descrição</th><th>Classificação</th><th>Ambiente / categoria</th><th>Conta / forma</th><th>Tipo</th><th>Entrada</th><th>Saída</th><th>Ações</th></tr></thead>
-        <tbody>${body}</tbody><tfoot><tr><th colspan="6">Total filtrado</th><td class="fv2-money in">${money(sum.incoming)}</td><td class="fv2-money out">${money(sum.expenses + sum.investments)}</td><td></td></tr></tfoot></table>
-      </div>`;
-  }
-  function renderContent(area) {
-    const root = roots.get(area) || (area === "sales" ? roots.get("gains") : null);
-    if (!root) return;
-    const target = root.querySelector("[data-fv2-results]");
-    if (target) target.innerHTML = tableMarkup(area);
-  }
-  function render(area) {
-    if (area === "sales") {
-      selection("gains").gainTab = "sales";
-      render("gains");
-      return;
-    }
-    const root = roots.get(area);
-    if (!root) return;
-    const activeArea = area === "gains" && selection("gains").gainTab === "sales" ? "sales" : area;
-    root.dataset.fv2ViewArea = activeArea;
-    const info = areas[activeArea];
-    const gainTabs = area === "gains" ? `<nav class="fv2-tabs" aria-label="Origem dos ganhos"><button type="button" class="fv2-tab ${activeArea === "gains" ? "is-active" : ""}" data-fv2-action="gain-tab" data-fv2-tab="gains" aria-selected="${activeArea === "gains"}">Recebimentos de reservas</button><button type="button" class="fv2-tab ${activeArea === "sales" ? "is-active" : ""}" data-fv2-action="gain-tab" data-fv2-tab="sales" aria-selected="${activeArea === "sales"}">Vendas</button></nav>` : "";
-    const actionLabel = activeArea === "expenses" ? "Adicionar despesa" : activeArea === "investments" ? "Registrar investimento" : "Registrar venda";
-    root.innerHTML = `<section class="fv2-module">
-      <header class="fv2-heading"><div><span>FINANCEIRO</span><h2>${info.title}</h2><p>${info.hint}</p></div>
-      <div class="fv2-heading-actions">${["expenses", "investments", "sales"].includes(activeArea) && canWriteFor(activeArea) ? `<button class="fv2-button primary" data-fv2-action="new">+ ${actionLabel}</button>` : ""}</div></header>
-      ${gainTabs}${filtersMarkup(activeArea)}<div data-fv2-results>${tableMarkup(activeArea)}</div>
-    </section>`;
-  }
-  function renderAll() { for (const area of roots.keys()) render(area); }
-  function editDestinations(area) {
-    return source().flatMap(env => (env.categories || []).filter(cat => {
-      if (String(cat.integrationId || "").startsWith("operation:")) return false;
-      if (area === "sales") return cat.flow === "in" && cat.classification === "revenue" && cat.mode === "sale";
-      return cat.flow !== "in" && (area === "investments" ? cat.classification === "investment" : cat.classification !== "investment");
-    }).map(cat => ({ id: `${env.id}::${cat.id}`, label: `${env.name} · ${cat.name}` })));
-  }
-
-  async function saveExpenseOccurrences({ environmentId, categoryId, newCategory, classification, entries }) {
-    if (!canWrite()) throw new Error("Sem permissão para alterar lançamentos.");
-    const data = structuredClone(source());
-    const environment = data.find(item => String(item.id) === String(environmentId));
-    if (!environment) throw new Error("O ambiente desta recorrência não está disponível.");
-    environment.categories ||= environment.categorias || [];
-    let category = environment.categories.find(item => String(item.id) === String(categoryId));
-    if (!category && newCategory) {
-      const name = String(newCategory).trim();
-      if (!name) throw new Error("Informe uma categoria para esta despesa.");
-      category = environment.categories.find(item => normalize(item.name) === normalize(name));
-      if (!category) {
-        category = { id: uid(), name, flow: "out", classification: classification === "cost" ? "cost" : "expense", businessArea: environment.name, entries: [], days: {} };
-        environment.categories.push(category);
-      }
-    }
-    if (!category || category.flow === "in" || category.classification === "investment" || String(category.integrationId || "").startsWith("operation:")) throw new Error("Categoria incompatível ou indisponível.");
-    if (!Array.isArray(category.entries) || !category.entries.length) category.entries = Object.entries(category.days || {}).map(([date, amount]) => ({ id: uid(), date, description: category.name, amount: Number(amount), accountId: category.accountId || "", method: category.method || "" }));
-    const next = entries.map(entry => ({ id: uid(), date: entry.date, description: String(entry.description).trim(), amount: Number(entry.amount), accountId: String(entry.accountId || ""), method: String(entry.method || ""), recurrenceId: String(entry.recurrenceId || ""), recurrenceFrequency: String(entry.recurrenceFrequency || ""), recurrenceEndDate: String(entry.recurrenceEndDate || ""), recurrenceDate: String(entry.recurrenceDate || "") }));
-    category.entries.push(...next);
-    category.days = category.entries.reduce((result, item) => { result[item.date] = (result[item.date] || 0) + Number(item.amount || 0); return result; }, {});
-    await window.EnjoyStore.writeAsync(key, data);
-    renderAll();
-    return next;
-  }
-
-  async function saveExpenseOccurrence(input) { return saveExpenseOccurrences({ ...input, entries: [input.entry] }); }
-
-  const expenseApi = Object.freeze({
-    money, esc, uid, accounts, records, canWrite, expenseEnvironments, saveExpenseOccurrence, saveExpenseOccurrences,
-    editExpenseEntry: row => buildDialog("expenses", row), renderAll
-  });
-  function recurrenceDates(start, frequency, end) {
-    const result = [], first = new Date(`${start}T12:00:00`), preferredDay = first.getDate();
-    for (let date = first, index = 0; index < 800 && isoDate(date) <= end; index += 1) {
-      result.push(isoDate(date));
-      date = frequency === "weekly" ? new Date(date.getFullYear(), date.getMonth(), date.getDate() + 7) : new Date(first.getFullYear(), first.getMonth() + index + 1, Math.min(preferredDay, new Date(first.getFullYear(), first.getMonth() + index + 2, 0).getDate()));
-    }
-    return result;
-  }
-  function isoDate(date) { return new Date(date.getFullYear(), date.getMonth(), date.getDate()).toLocaleDateString("en-CA"); }
-  function buildDialog(area, edit) {
-    const isEdit = !!edit;
-    const d = document.createElement("dialog");
-    d.className = "fv2-dialog";
-    d.setAttribute("aria-label", isEdit ? (area === "sales" ? "Editar venda" : "Editar lançamento") : (area === "sales" ? "Nova venda" : "Novo lançamento"));
-    const choices = editDestinations(area);
-    const chosen = edit ? `${edit.environmentId}::${edit.categoryId}` : (choices[0]?.id || "__new__");
-    const currentAccount = edit?.accountId || "";
-    const usableAccounts = [...accounts().filter(item => item.active || item.id === currentAccount)];
-    const existingSeries = isEdit && Boolean(edit?.recurrenceFrequency);
-    const currentFrequency = edit?.recurrenceFrequency || "daily";
-    const frequencyLabel = { daily: "Diária", weekly: "Semanal", monthly: "Mensal" };
-    const recurrenceFields = area !== "expenses" ? "" : existingSeries
-      ? `<label>Frequência da série<input value="${frequencyLabel[currentFrequency] || "Recorrente"}" readonly><small>Esta ocorrência pode ser alterada individualmente. A frequência da série permanece preservada.</small></label>`
-      : `<label>Frequência<select name="frequency"><option value="daily" ${currentFrequency === "daily" ? "selected" : ""}>Diária</option><option value="weekly" ${currentFrequency === "weekly" ? "selected" : ""}>Semanal</option><option value="monthly" ${currentFrequency === "monthly" ? "selected" : ""}>Mensal</option></select><small>Diária cria somente este lançamento.</small></label><label data-fv2-recurrence-end hidden>Vigência<select name="endMode"><option value="indefinite">Tempo indeterminado</option><option value="until">Até uma data</option></select></label><label data-fv2-recurrence-until hidden>Data final<input type="date" name="endDate"></label>`;
-    d.innerHTML = `<form class="fv2-dialog-form" novalidate>
-      <header><h2>${isEdit ? area === "sales" ? "Editar venda" : "Editar lançamento" : area === "investments" ? "Registrar investimento" : area === "sales" ? "Registrar venda" : "Adicionar despesa"}</h2><p>${isEdit ? existingSeries ? "Atualize somente esta ocorrência da série." : "Atualize este lançamento." : area === "sales" ? "A venda será registrada como ganho avulso, separada dos recebimentos de reservas." : "O registro será salvo na base financeira compartilhada do Enjoy."}</p></header>
-      <div class="fv2-fields">
-        ${isEdit || area === "sales" ? "" : `<label>Ambiente / categoria<select name="destination"><option value="__new__" ${chosen === "__new__" ? "selected" : ""}>+ Criar nova categoria</option>${choices.map(item => `<option value="${esc(item.id)}" ${item.id === chosen ? "selected" : ""}>${esc(item.label)}</option>`).join("")}</select></label>
-        <label>Ambiente para nova categoria<input name="newEnvironment" placeholder="Ex.: Operação"></label>
-        <label>Nome da nova categoria<input name="newCategory" placeholder="Ex.: Manutenção"></label>
-        ${area === "expenses" ? `<label>Classificação para nova categoria<select name="newClassification"><option value="expense">Despesa</option><option value="cost">Custo operacional</option></select></label>` : ""}`}
-        <label>Data<input type="date" name="date" value="${esc(edit?.date || curr())}" required></label>
-        ${recurrenceFields}
-        <label>Descrição<input name="description" value="${esc(edit?.description || "")}" required maxlength="240"></label>
-        <label>Valor (R$)<input type="number" min="0.01" step="0.01" name="amount" value="${esc(edit?.amount || "")}" required></label>
-        <label>Conta<select name="accountId"><option value="">Sem conta informada</option>${usableAccounts.map(item => `<option value="${esc(item.id)}" ${currentAccount === item.id ? "selected" : ""}>${esc(item.name)}${item.active ? "" : " (inativa)"}</option>`).join("")}</select></label>
-        <label>Forma de pagamento<input name="method" value="${esc(edit?.method || "")}" placeholder="Pix, cartão, dinheiro..."></label>
-      </div>
-      <p class="fv2-form-error" role="alert" hidden></p>
-      <footer><button type="button" class="fv2-button secondary" data-fv2-close>Cancelar</button><button type="submit" class="fv2-button primary">Salvar lançamento</button></footer>
-    </form>`;
-    d.querySelector("[data-fv2-close]").addEventListener("click", () => d.close());
-    d.addEventListener("click", event => { if (event.target === d) d.close(); });
-    d.addEventListener("close", () => d.remove(), { once: true });
-    const frequency = d.querySelector('[name="frequency"]'), recurrenceEnd = d.querySelector('[data-fv2-recurrence-end]'), recurrenceUntil = d.querySelector('[data-fv2-recurrence-until]');
-    const updateRecurrenceControls = () => { if (!frequency) return; const recurring = ["weekly", "monthly"].includes(frequency.value); recurrenceEnd.hidden = !recurring; recurrenceUntil.hidden = !recurring || d.querySelector('[name="endMode"]')?.value !== "until"; };
-    if (frequency) frequency.addEventListener("change", updateRecurrenceControls);
-    d.querySelector('[name="endMode"]')?.addEventListener("change", updateRecurrenceControls);
-    d.querySelector("form").addEventListener("submit", async event => {
-      event.preventDefault();
-      const form = event.currentTarget, fields = Object.fromEntries(new FormData(form));
-      const error = d.querySelector(".fv2-form-error");
-      const warn = message => { error.hidden = false; error.textContent = message; };
-      const amount = Number(fields.amount);
-      if (!canWriteFor(area)) return warn("Sem permissão para alterar lançamentos.");
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(fields.date || "") || !Number.isFinite(Date.parse(`${fields.date}T12:00:00Z`)) || new Date(`${fields.date}T12:00:00Z`).toISOString().slice(0, 10) !== fields.date) return warn("Informe uma data válida.");
-      if (!Number.isFinite(amount) || amount <= 0) return warn("Informe um valor maior que zero.");
-      if (!String(fields.description || "").trim()) return warn("Informe a descrição.");
-      const button = form.querySelector('[type="submit"]');
-      button.disabled = true;
-      try {
-        const data = structuredClone(source());
-        let env, cat;
-        if (isEdit) {
-          env = data.find(item => String(item.id) === edit.environmentId);
-          cat = env?.categories?.find(item => String(item.id) === edit.categoryId);
-          if (!cat || String(cat.integrationId || "").startsWith("operation:")) throw new Error("Categoria indisponível para edição.");
-        } else if (area === "sales") {
-          env = data.find(item => normalize(item.name) === "vendas");
-          if (!env) { env = { id: uid(), name: "Vendas", categories: [] }; data.push(env); }
-          env.categories ||= env.categorias || [];
-          cat = env.categories.find(item => item.mode === "sale" && item.flow === "in" && item.classification === "revenue");
-          if (!cat) {
-            cat = { id: uid(), name: "Vendas avulsas", flow: "in", classification: "revenue", mode: "sale", businessArea: "Vendas", entries: [], days: {} };
-            env.categories.push(cat);
-          }
-        } else if (fields.destination === "__new__") {
-          const environmentName = String(fields.newEnvironment || "").trim();
-          const categoryName = String(fields.newCategory || "").trim();
-          if (!environmentName || !categoryName) throw new Error("Informe o ambiente e a categoria.");
-          env = data.find(item => normalize(item.name) === normalize(environmentName));
-          if (!env) { env = { id: uid(), name: environmentName, categories: [] }; data.push(env); }
-          const duplicate = (env.categories || []).find(item => normalize(item.name) === normalize(categoryName));
-          if (duplicate) throw new Error("Esta categoria já existe neste ambiente. Selecione-a na lista.");
-          cat = { id: uid(), name: categoryName, flow: area === "sales" ? "in" : "out", classification: area === "sales" ? "revenue" : area === "investments" ? "investment" : fields.newClassification === "cost" ? "cost" : "expense", mode: area === "sales" ? "sale" : undefined, businessArea: environmentName, entries: [], days: {} };
-          env.categories ||= [];
-          env.categories.push(cat);
-        } else {
-          const [envId, catId] = String(fields.destination || "").split("::");
-          env = data.find(item => String(item.id) === envId);
-          cat = env?.categories?.find(item => String(item.id) === catId);
-          const incompatible = area === "sales"
-            ? cat?.flow !== "in" || cat?.classification !== "revenue" || cat?.mode !== "sale"
-            : cat?.flow === "in" || (area === "investments") !== (cat?.classification === "investment");
-          if (!cat || incompatible || String(cat.integrationId || "").startsWith("operation:")) throw new Error("Categoria incompatível ou indisponível.");
-        }
-        if (!Array.isArray(cat.entries) || !cat.entries.length) {
-          cat.entries = Object.entries(cat.days || {}).map(([date, value]) => ({ id: uid(), date, description: cat.name, amount: Number(value), accountId: cat.accountId || "", method: cat.method || "" }));
-        }
-        const frequency = area === "expenses" ? (existingSeries ? currentFrequency : fields.frequency || "daily") : "daily";
-        const recurring = ["weekly", "monthly"].includes(frequency);
-        const endDate = recurring ? (fields.endMode === "until" ? fields.endDate : isoDate(new Date(new Date(`${fields.date}T12:00:00`).getFullYear(), new Date(`${fields.date}T12:00:00`).getMonth() + 12, new Date(`${fields.date}T12:00:00`).getDate()))) : fields.date;
-        if (recurring && !existingSeries && (!/^\d{4}-\d{2}-\d{2}$/.test(endDate || "") || endDate < fields.date)) throw new Error("Informe uma data final válida para a recorrência.");
-        const dates = recurring && !existingSeries ? recurrenceDates(fields.date, frequency, endDate) : [fields.date];
-        const seriesId = recurring ? (existingSeries ? String(edit.recurrenceId || uid()) : uid()) : "";
-        const recurrence = recurring ? { recurrenceId: seriesId, recurrenceFrequency: frequency, recurrenceEndDate: fields.endMode === "until" ? endDate : "", recurrenceDate: fields.date } : { recurrenceId: "", recurrenceFrequency: "", recurrenceEndDate: "", recurrenceDate: "" };
-        const entry = { date: fields.date, description: String(fields.description).trim(), amount, accountId: String(fields.accountId || ""), method: String(fields.method || "") };
-        if (isEdit) {
-          const original = cat.entries[edit.index];
-          if (!original || original.groupId) throw new Error("O lançamento mudou. Atualize a tela antes de editar.");
-          cat.entries[edit.index] = { ...original, ...entry, ...(existingSeries ? {} : recurrence), id: original.id || uid() };
-          if (recurring && !existingSeries) cat.entries.push(...dates.filter(date => date > fields.date).map(date => ({ id: uid(), ...entry, ...recurrence, date, recurrenceDate: date })));
-        } else cat.entries.push(...dates.map(date => ({ id: uid(), ...entry, date, recurrenceId: seriesId, recurrenceFrequency: recurring ? frequency : "", recurrenceEndDate: recurring && fields.endMode === "until" ? endDate : "", recurrenceDate: recurring ? date : "" })));
-        const updated = {};
-        for (const item of cat.entries) updated[item.date] = (updated[item.date] || 0) + Number(item.amount || 0);
-        cat.days = updated;
-        await window.EnjoyStore.writeAsync(key, data);
-        d.close();
-        renderAll();
-        window.EnjoyUI?.success?.("Lançamento salvo.");
-      } catch (err) { warn(err?.message || "Não foi possível salvar o lançamento."); }
-      finally { if (d.isConnected) button.disabled = false; }
-    });
-    document.body.append(d);
-    d.showModal();
-  }
-  function exportCSV(area) {
-    const cols = ["data", "descricao", "classificacao", "ambiente", "categoria", "conta", "forma", "tipo", "valor"];
-    const line = value => { const text = String(value ?? ""); const safe = ["=", "+", "-", "@", "\t", "\r"].includes(text.charAt(0)) ? "'" + text : text; return '"' + safe.replaceAll('"', '""') + '"'; };
-    const rows = filtered(area).map(row => [row.date, row.description, row.classification, row.environment, row.category, accountLabel(row.accountId), row.method, row.flow === "in" ? "Entrada" : "Saída", row.amount.toFixed(2)].map(line).join(";"));
-    const csv = "\ufeff" + [cols.join(";"), ...rows].join("\r\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const a = document.createElement("a"); a.href = url; a.download = `enjoy-financeiro-v2-${area}.csv`; document.body.append(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-  function onClick(area, event) {
-    const el = event.target.closest("[data-fv2-action]");
-    if (!el) return;
-    const action = el.dataset.fv2Action;
-    const state = selection(area);
-    if (action === "gain-tab") { selection("gains").gainTab = el.dataset.fv2Tab === "sales" ? "sales" : "gains"; render("gains"); return; }
-    if (action === "reset") { settings.delete(area); render(area); return; }
-    if (action === "sort") { state.descending = !state.descending; renderContent(area); return; }
-    if (action === "export") { exportCSV(area); return; }
-    if (action === "new" && canWriteFor(area) && ["expenses", "investments", "sales"].includes(area)) { buildDialog(area, null); return; }
-    if (action === "edit" && canWriteFor(area)) {
-      const row = records().find(item => item.environmentId === el.dataset.environmentId && item.categoryId === el.dataset.categoryId && item.index === Number(el.dataset.entryIndex));
-      if (row && !row.generated && !row.groupId && (row.flow === "out" || row.isSale)) buildDialog(area, row);
-      return;
-    }
-    if (action === "reservation") {
-      const id = el.dataset.reservationId;
-      const dataKey = window.EnjoyOperationsData?.KEYS?.reservations;
-      const reservation = window.EnjoyOperationsData?.records?.(dataKey)?.find(item => String(item.id) === String(id));
-      if (!reservation) { window.EnjoyUI?.warning?.("A reserva vinculada não está disponível."); return; }
-      window.EnjoyNavigation.open("reservations");
-      const opened = window.EnjoyModules.reservations?.focusReservation?.(id, reservation.checkin || "");
-      if (opened === false) window.EnjoyUI?.warning?.("Reserva não encontrada.");
-    }
-  }
-  function onFilter(area, event) {
-    const input = event.target.closest("[data-fv2-filter]");
-    if (!input) return;
-    const state = selection(area);
-    state[input.dataset.fv2Filter] = input.value;
-    if (event.type === "input" && input.dataset.fv2Filter === "query") renderContent(area);
-    else render(area);
-  }
-  function mount(root, area) {
-    if (!root || !areas[area]) return;
-    // Uma única área visível por vez no laboratório; evita remontagens concorrentes.
-    roots.clear();
-    roots.set(area, root);
-    if (!root.dataset.fv2Bound) {
-      root.dataset.fv2Bound = "1";
-      root.addEventListener("click", event => onClick(root.dataset.fv2ViewArea || root.dataset.fv2Area, event));
-      root.addEventListener("change", event => onFilter(root.dataset.fv2ViewArea || root.dataset.fv2Area, event));
-      root.addEventListener("input", event => { if (event.target.matches('[data-fv2-filter="query"]')) onFilter(root.dataset.fv2ViewArea || root.dataset.fv2Area, event); });
-    }
-    root.dataset.fv2Area = area;
-    if (!listening) {
-      listening = true;
-      window.EnjoyStore.subscribe(key, renderAll);
-      window.EnjoyStore.subscribe(window.EnjoyDataKeys.financeSettings, renderAll);
-      if (window.EnjoyOperationsData?.KEYS?.reservations) window.EnjoyStore.subscribe(window.EnjoyOperationsData.KEYS.reservations, renderAll);
-      window.addEventListener("enjoy:lodging-change", renderAll);
-    }
-    render(area);
-  }
-  window.EnjoyFinance = Object.freeze({ mount, records, filtered, totals, inArea, matches, expenseEnvironments, saveExpenseOccurrence, saveExpenseOccurrences, editExpenseEntry: row => buildDialog("expenses", row) });
+window.EnjoyMockReady.then(() => {
+(() => {
+'use strict';
+const KEY='enjoy_resumo_movimentacoes_v1';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const brl=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const cents=n=>Math.round(Number(n||0)*100);
+const uid=()=>crypto?.randomUUID?.()||`m-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const dateFmt=d=>/^\d{4}-\d\d-\d\d$/.test(d||'')?d.split('-').reverse().join('/'): '—';
+const validDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'')&&!Number.isNaN(Date.parse(d+'T12:00:00Z'))&&new Date(d+'T12:00:00Z').toISOString().slice(0,10)===d;
+const accounts=()=>window.EnjoyReceipts?.accounts?.()||[];
+const accountName=id=>accounts().find(a=>a.id===id)?.name||'Não informada';
+const methods=['Pix','Dinheiro','Cartão de débito','Cartão de crédito','Transferência','Boleto','Outro'];
+const source=()=>window.EnjoyStore.read(KEY,[]);
+const store=async data=>window.EnjoyStore.writeAsync(KEY,data);
+const reservationList=()=>window.EnjoyOperationsData?.records?.(window.EnjoyOperationsData?.KEYS?.reservations)||[];
+const state={tab:'reservations',query:'',account:'',period:'all',start:'',end:'',origin:'all',sort:'desc'};
+const categoriesSeed=[{name:'Alimentos e bebidas',subs:['Bebidas','Alimentos']},{name:'Serviços',subs:['Lavanderia','Experiências']},{name:'Produtos',subs:['Souvenires']},{name:'Outras vendas',subs:[]}];
+const CAT_KEY='enjoy-gains-categories-v3';
+let categories;try{categories=JSON.parse(localStorage.getItem(CAT_KEY));if(!Array.isArray(categories))categories=categoriesSeed}catch{categories=categoriesSeed};
+const saveCats=()=>{try{localStorage.setItem(CAT_KEY,JSON.stringify(categories))}catch{}};
+const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const total=s=>cents(s.amount)/100;
+const received=s=>(s.payments||[]).filter(p=>p.status!=='void').reduce((n,p)=>n+cents(p.value),0)/100;
+const refunded=s=>(s.refunds||[]).reduce((n,p)=>n+cents(p.value),0)/100;
+const due=s=>Math.max(0,(cents(total(s))-cents(received(s)))/100);
+const status=s=>s.cancelled?'Cancelada':due(s)<.005?'Recebida':received(s)>0?'Parcial':'Pendente';
+const getSales=()=>source().flatMap(env=>(env.categories||[]).filter(c=>c.mode==='sale'&&c.flow==='in').flatMap(cat=>(cat.entries||[]).map((entry,index)=>({entry,cat,env,index}))));
+const reservationData=()=>source().flatMap(env=>(env.categories||[]).filter(c=>c.flow==='in'&&c.mode!=='sale').flatMap(cat=>(cat.entries||[]).map((entry,index)=>({entry,cat,env,index}))));
+const getResItem=r=>{const id=r.cat.reservationId||r.entry.reservationId||'';const reservation=reservationList().find(x=>String(x.id)===String(id));const name=reservation?.name || String(r.entry.description||r.cat.name).replace(/^Booking\s*[—-]\s*/i,'');const origin=reservation?.channel==='Booking'||/booking/i.test(r.entry.description||'')?'Booking':'Direta';const gross=Number((r.entry.gross ?? r.entry.amount ?? 0));const commission=Number(r.entry.commission||0);return {...r,id,name,origin,gross,commission,net:Math.max(0,gross-commission),checkout:r.entry.checkout||reservation?.checkout||'',paid:!!r.entry.confirmed,receiptDate:r.entry.receiptDate||'',expected:r.entry.expected||nextBusinessMonth(r.entry.checkout)};};
+function nextBusinessMonth(d){if(!validDate(d))return '';const [y,m]=d.split('-').map(Number);const t=new Date(y,m,1,12);while(t.getDay()===0||t.getDay()===6)t.setDate(t.getDate()+1);return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`}
+function modal(title,content,actions=''){const d=document.createElement('dialog');d.className='fv2-dialog gain-modal';d.innerHTML=`<div class="fv2-dialog-form"><header><h2>${esc(title)}</h2><p>Enjoy Gestão · Protótipo financeiro</p></header>${content}<footer><button class="fv2-button" data-close type="button">Fechar</button>${actions}</footer></div>`;document.body.append(d);d.querySelector('[data-close]').onclick=()=>d.close();d.addEventListener('close',()=>d.remove(),{once:true});d.showModal();return d}
+function toast(t){const el=$('toast');el.textContent=t;el.classList.add('visible');setTimeout(()=>el.classList.remove('visible'),2700)}
+const field=(label,html)=>`<label>${label}${html}</label>`;
+const input=(name,type,value='',extra='')=>`<input name="${name}" type="${type}" value="${esc(value)}" ${extra}>`;
+const select=(name,opts,current='',extra='')=>`<select name="${name}" ${extra}>${opts.map(([v,t])=>`<option value="${esc(v)}" ${String(current)===String(v)?'selected':''}>${esc(t)}</option>`).join('')}</select>`;
+const acctOptions=()=>[['','Selecione a conta'],...accounts().map(a=>[a.id,a.name])];
+const methodsOptions=()=>[['','Selecione a forma'],...methods.map(a=>[a,a])];
+function filteredReservations(){return reservationData().map(getResItem).filter(r=>{if(state.origin!=='all'&&r.origin!==state.origin)return false;if(state.account&&r.entry.accountId!==state.account)return false;if(!periodOk(r.entry.date))return false;return !state.query||normalize([r.name,r.entry.description,r.origin,r.id].join(' ')).includes(normalize(state.query))}).sort((a,b)=>state.sort==='desc'?b.entry.date.localeCompare(a.entry.date):a.entry.date.localeCompare(b.entry.date))}
+function filteredSales(){return getSales().filter(r=>{const s=augment(r.entry);if(state.account&&!(s.payments||[]).some(p=>p.accountId===state.account))return false;if(!periodOk(s.date))return false;return !state.query||normalize([s.description,s.category,s.subcategory,s.guestName,...(s.items||[]).map(i=>i.name)].join(' ')).includes(normalize(state.query))}).sort((a,b)=>state.sort==='desc'?b.entry.date.localeCompare(a.entry.date):a.entry.date.localeCompare(b.entry.date))}
+function periodOk(d){const t=today();if(state.period==='month'&&d.slice(0,7)!==t.slice(0,7))return false;if(state.period==='range'&&((state.start&&d<state.start)||(state.end&&d>state.end)))return false;return true}
+function augment(s){return {...s,category:s.category||'Outras vendas',subcategory:s.subcategory||'',payments:Array.isArray(s.payments)?s.payments:((s.accountId&&s.method)?[{id:'legacy-'+s.id,date:s.date,value:s.amount,accountId:s.accountId,method:s.method}]:[]),refunds:s.refunds||[],items:s.items||[],history:s.history||[]}}
+function filtersHtml(){return `<section class="fv2-filters"><label>Conta ${select('account',[['','Todas as contas'],...accounts().map(a=>[a.id,a.name])],state.account,'data-filter')}</label><label class="fv2-search">Buscar ${input('query','search',state.query,'data-filter placeholder="Descrição, hóspede, produto..."')}</label>${state.tab==='reservations'?`<label>Origem ${select('origin',[['all','Booking e diretas'],['Booking','Booking'],['Direta','Direta']],state.origin,'data-filter')}</label>`:''}<label>Período ${select('period',[['all','Todo o período'],['month','Este mês'],['range','Intervalo personalizado']],state.period,'data-filter')}</label>${state.period==='range'?field('De',input('start','date',state.start,'data-filter'))+field('Até',input('end','date',state.end,'data-filter')):''}<button class="fv2-button" data-action="clear">Limpar filtros</button></section>`}
+function reservationsTable(){const rows=filteredReservations();const gross=rows.reduce((a,r)=>a+r.gross,0),net=rows.reduce((a,r)=>a+r.net,0),paid=rows.filter(r=>r.paid).reduce((a,r)=>a+r.net,0);return `<div class="fv2-cards"><article><small>Valor bruto das reservas</small><strong>${brl(gross)}</strong></article><article><small>Valor líquido previsto</small><strong>${brl(net)}</strong></article><article><small>Recebimento confirmado</small><strong class="fv2-in">${brl(paid)}</strong></article><article><small>Valor a conciliar</small><strong>${brl(Math.max(0,net-paid))}</strong></article></div><div class="fv2-table-heading"><div><h3>Recebimentos de reservas</h3><p>${rows.length} registros · valores espelhados das reservas (mock)</p></div><button class="fv2-button" data-action="csv">Exportar CSV</button></div><div class="fv2-scroll"><table class="fv2-table"><thead><tr><th><button class="fv2-sort" data-action="sort">Data ${state.sort==='desc'?'↓':'↑'}</button></th><th>Reserva / hóspede</th><th>Origem</th><th>Conta / forma</th><th>Repasse previsto</th><th class="fv2-money">Bruto</th><th class="fv2-money">Líquido</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${dateFmt(r.entry.date)}</td><td class="fv2-description"><strong>${esc(r.name)}</strong><small>${esc(r.id||'Reserva vinculada')}</small></td><td><span class="fv2-chip">${esc(r.origin)}</span></td><td>${esc(accountName(r.entry.accountId))}<small>${esc(r.entry.method||'Não informada')}</small></td><td>${r.origin==='Booking'?dateFmt(r.expected):'—'}${r.entry.receiptDate?`<small>Efetivo: ${dateFmt(r.receiptDate)}</small>`:''}</td><td class="fv2-money">${brl(r.gross)}</td><td class="fv2-money in">${brl(r.net)}</td><td><span class="gain-pill ${r.paid?'ok':'wait'}">${r.paid?'Confirmado':'Previsto'}</span></td><td><button class="fv2-text-button" data-action="reservation" data-env="${esc(r.env.id)}" data-cat="${esc(r.cat.id)}" data-id="${esc(r.entry.id)}">Editar reserva</button></td></tr>`).join('')||'<tr><td colspan="9" class="fv2-empty">Nenhuma reserva encontrada.</td></tr>'}</tbody></table></div><p class="gain-note">O repasse Booking é estimado para o primeiro dia útil do mês seguinte ao checkout. Feriados bancários exigem conferência. Dados demonstrativos.</p>`}
+function salesTable(){const rows=filteredSales().map(r=>({...r,s:augment(r.entry)}));const active=rows.filter(x=>!x.s.cancelled);const saleTotal=active.reduce((a,r)=>a+total(r.s),0);const got=rows.reduce((a,r)=>a+received(r.s),0);const refund=rows.reduce((a,r)=>a+refunded(r.s),0);const pend=active.reduce((a,r)=>a+due(r.s),0);return `<div class="fv2-cards"><article><small>Total vendido (ativas)</small><strong>${brl(saleTotal)}</strong></article><article><small>Recebimentos brutos</small><strong class="fv2-in">${brl(got)}</strong></article><article><small>Devoluções</small><strong class="fv2-out">${brl(refund)}</strong></article><article><small>Saldo a receber</small><strong>${brl(pend)}</strong></article></div><div class="fv2-table-heading"><div><h3>Vendas de produtos e serviços</h3><p>${rows.length} registros · recebimentos independentes</p></div><div class="gain-actions"><button class="fv2-button" data-action="csv">Exportar CSV</button><button class="fv2-button primary" data-action="new">+ Nova venda</button></div></div><div class="fv2-scroll"><table class="fv2-table"><thead><tr><th><button class="fv2-sort" data-action="sort">Data ${state.sort==='desc'?'↓':'↑'}</button></th><th>Descrição / itens</th><th>Categoria / subcategoria</th><th>Conta / forma</th><th>Status</th><th class="fv2-money">Total</th><th class="fv2-money">Recebido</th><th class="fv2-money">Pendente</th><th>Ações</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${dateFmt(r.s.date)}</td><td class="fv2-description"><strong>${esc(r.s.description)}</strong><small>${r.s.items.length?`${r.s.items.length} item(ns)`:'Venda rápida'}${r.s.guestName?' · '+esc(r.s.guestName):''}</small></td><td>${esc(r.s.category)}${r.s.subcategory?`<small>${esc(r.s.subcategory)}</small>`:''}</td><td>${r.s.payments.length?esc(accountName(r.s.payments[0].accountId))+'<small>'+esc(r.s.payments[0].method||'')+(r.s.payments.length>1?' · +'+(r.s.payments.length-1):'')+'</small>':'<span class="fv2-muted">Sem recebimento</span>'}</td><td><span class="gain-pill ${r.s.cancelled?'bad':due(r.s)<=0?'ok':received(r.s)>0?'partial':'wait'}">${status(r.s)}</span></td><td class="fv2-money">${brl(r.s.amount)}</td><td class="fv2-money in">${brl(received(r.s)-refunded(r.s))}</td><td class="fv2-money">${brl(r.s.cancelled?0:due(r.s))}</td><td><button class="fv2-text-button" data-action="sale" data-env="${esc(r.env.id)}" data-cat="${esc(r.cat.id)}" data-id="${esc(r.entry.id)}">Visualizar / editar</button></td></tr>`).join('')||'<tr><td colspan="9" class="fv2-empty">Nenhuma venda encontrada.</td></tr>'}</tbody></table></div><p class="gain-note">Total, recebimentos e devoluções são informações distintas. Valores recebidos não duplicam o valor da venda.</p>`}
+function render(){const root=$('module-root');root.innerHTML=`<section class="fv2-module"><div class="fv2-heading"><div><span>FINANCEIRO</span><h2>Ganhos</h2><p>Receitas de reservas para consulta; vendas para gestão direta.</p></div><span class="gain-pill ok">Protótipo offline</span></div><nav class="fv2-tabs"><button class="fv2-tab ${state.tab==='reservations'?'is-active':''}" data-action="tab" data-tab="reservations">Recebimentos de reservas</button><button class="fv2-tab ${state.tab==='sales'?'is-active':''}" data-action="tab" data-tab="sales">Vendas</button></nav>${filtersHtml()}${state.tab==='sales'?salesTable():reservationsTable()}</section>`}
+function findRecord(b){const data=structuredClone(source());const env=data.find(x=>String(x.id)===b.dataset.env);const cat=env?.categories?.find(x=>String(x.id)===b.dataset.cat);const entry=cat?.entries?.find(x=>String(x.id)===b.dataset.id);return {data,env,cat,entry}}
+function paymentMarkup(p,i){return `<div class="gain-payment-row"><input aria-label="Data do recebimento" data-pdate="${i}" type="date" value="${esc(p.date)}"><input aria-label="Valor do recebimento" data-pvalue="${i}" type="number" min="0.01" step="0.01" value="${esc(p.value)}">${select('payAccount',acctOptions(),p.accountId,`data-paccount="${i}" aria-label="Conta do recebimento"`)}${select('payMethod',methodsOptions(),p.method,`data-pmethod="${i}" aria-label="Forma do recebimento"`)}<button type="button" class="fv2-button" data-remove-pay="${i}">✕</button></div>`}
+function refundMarkup(p,i){return `<div class="gain-payment-row"><input aria-label="Data da devolução" data-rdate="${i}" type="date" value="${esc(p.date)}"><input aria-label="Valor da devolução" data-rvalue="${i}" type="number" min="0.01" step="0.01" value="${esc(p.value)}">${select('refundAccount',acctOptions(),p.accountId,`data-raccount="${i}" aria-label="Conta de devolução"`)}${select('refundMethod',methodsOptions(),p.method,`data-rmethod="${i}" aria-label="Forma de devolução"`)}<button type="button" class="fv2-button" data-remove-refund="${i}">✕</button><input class="gain-reason" data-rreason="${i}" value="${esc(p.reason)}" placeholder="Motivo da devolução *" aria-label="Motivo da devolução"></div>`}
+function itemMarkup(p,i){return `<div class="gain-item-row"><input data-item-name="${i}" placeholder="Produto ou serviço" value="${esc(p.name)}"><input type="number" data-item-qty="${i}" min="1" step="1" value="${esc(p.qty||1)}" aria-label="Quantidade"><input type="number" data-item-price="${i}" min="0.01" step="0.01" value="${esc(p.price)}" aria-label="Preço unitário"><button class="fv2-button" type="button" data-remove-item="${i}">✕</button></div>`}
+function openSale(rec){let original=rec?.entry?augment(rec.entry):null;let draft=original?structuredClone(original):{id:uid(),date:today(),description:'',category:categories[0]?.name||'Outras vendas',subcategory:'',amount:'',guestName:'',reservationId:'',items:[],payments:[],refunds:[],history:[],notes:'',cancelled:false};const isEdit=!!original;const body=`<form class="gain-sale-form"><div class="fv2-fields">${field('Descrição da venda *',input('description','text',draft.description,'required maxlength="120"'))}${field('Data *',input('date','date',draft.date,'required'))}${field('Categoria *',select('category',[...categories.map(c=>[c.name,c.name]),['__new__','+ Nova categoria']],draft.category))}${field('Subcategoria (opcional)',select('subcategory',[],draft.subcategory))}<div class="gain-extra full" id="newCategoryBox" hidden>${field('Nome da categoria',input('newCategory','text'))}</div><div class="gain-extra full" id="newSubcategoryBox" hidden>${field('Nome da subcategoria',input('newSubcategory','text'))}</div>${field('Valor total da venda *',input('amount','number',draft.amount,'min="0.01" step="0.01" required'))}${field('Hóspede (opcional)',input('guestName','text',draft.guestName,'placeholder="Nome do hóspede"'))}${field('Reserva vinculada (opcional)',select('reservationId',[['','Sem vínculo'],...reservationList().map(r=>[r.id,`${r.name} (${r.id})`])],draft.reservationId))}<div class="full gain-inline"><span>Itens da venda <small>(opcionais)</small></span><button type="button" class="fv2-button" id="addSaleItem">+ Item</button></div><div class="full" id="saleItemList"></div><div class="full gain-inline"><span>Recebimentos <small>(independentes)</small></span><button type="button" class="fv2-button" id="addSalePayment">+ Recebimento</button></div><div class="full" id="salePaymentList"></div><div class="full gain-inline"><span>Devoluções / estornos</span><button type="button" class="fv2-button" id="addSaleRefund">+ Devolução</button></div><div class="full" id="saleRefundList"></div><label class="full">Observações<textarea name="notes" rows="2">${esc(draft.notes)}</textarea></label><div class="full gain-summary" id="saleSummary"></div><div class="full gain-error" id="saleError" role="alert"></div></div><div class="gain-form-footer"><button class="fv2-button primary" type="submit">Salvar venda</button></div></form>`;const d=modal(isEdit?'Detalhes / editar venda':'Nova venda',body, isEdit?'<button class="fv2-button" type="button" id="saleCancel">Cancelar venda</button><button class="fv2-button" type="button" id="saleDelete">Excluir</button>':'');const form=d.querySelector('form');const fld=name=>form.elements.namedItem(name);const err=t=>d.querySelector('#saleError').textContent=t;
+function updateCategory(){const chosen=fld('category').value;d.querySelector('#newCategoryBox').hidden=chosen!=='__new__';const cat=categories.find(c=>c.name===chosen);const sub=fld('subcategory');const previous=sub.value;sub.innerHTML=select('sub',[['','Sem subcategoria'],...(cat?.subs||[]).map(s=>[s,s]),['__new__','+ Nova subcategoria']],previous).replace(/^<select[^>]+>|<\/select>$/g,'');if(draft.subcategory&&[...sub.options].some(o=>o.value===draft.subcategory))sub.value=draft.subcategory;d.querySelector('#newSubcategoryBox').hidden=sub.value!=='__new__'}
+function snapshotInputs(){d.querySelectorAll('[data-item-name]').forEach((el,i)=>draft.items[i].name=el.value);d.querySelectorAll('[data-item-qty]').forEach((el,i)=>draft.items[i].qty=el.value);d.querySelectorAll('[data-item-price]').forEach((el,i)=>draft.items[i].price=el.value);d.querySelectorAll('[data-pdate]').forEach((el,i)=>draft.payments[i].date=el.value);d.querySelectorAll('[data-pvalue]').forEach((el,i)=>draft.payments[i].value=el.value);d.querySelectorAll('[data-paccount]').forEach((el,i)=>draft.payments[i].accountId=el.value);d.querySelectorAll('[data-pmethod]').forEach((el,i)=>draft.payments[i].method=el.value);d.querySelectorAll('[data-rdate]').forEach((el,i)=>draft.refunds[i].date=el.value);d.querySelectorAll('[data-rvalue]').forEach((el,i)=>draft.refunds[i].value=el.value);d.querySelectorAll('[data-raccount]').forEach((el,i)=>draft.refunds[i].accountId=el.value);d.querySelectorAll('[data-rmethod]').forEach((el,i)=>draft.refunds[i].method=el.value);d.querySelectorAll('[data-rreason]').forEach((el,i)=>draft.refunds[i].reason=el.value)}
+function drawLists(){d.querySelector('#saleItemList').innerHTML=draft.items.map(itemMarkup).join('');d.querySelector('#salePaymentList').innerHTML=draft.payments.map(paymentMarkup).join('')||'<p class="gain-note">Nenhum recebimento: a venda ficará pendente.</p>';d.querySelector('#saleRefundList').innerHTML=draft.refunds.map(refundMarkup).join('')||'<p class="gain-note">Nenhuma devolução registrada.</p>';summary()}
+function summary(){const receivedNow=draft.payments.reduce((a,p)=>a+Number(p.value||0),0),refundNow=draft.refunds.reduce((a,p)=>a+Number(p.value||0),0),v=Number(fld('amount').value||0);d.querySelector('#saleSummary').innerHTML=`Total: <b>${brl(v)}</b> · Recebido: <b>${brl(receivedNow)}</b> · Devolvido: <b>${brl(refundNow)}</b> · Pendente: <b>${brl(Math.max(0,v-receivedNow))}</b>`}
+updateCategory();drawLists();fld('category').addEventListener('change',()=>{draft.subcategory='';updateCategory()});fld('subcategory').addEventListener('change',()=>d.querySelector('#newSubcategoryBox').hidden=fld('subcategory').value!=='__new__');fld('amount').addEventListener('input',summary);d.querySelector('#saleItemList').addEventListener('input',e=>{snapshotInputs();const itemTotal=draft.items.reduce((n,i)=>n+(Number(i.qty)||0)*(Number(i.price)||0),0);if(itemTotal>0)fld('amount').value=itemTotal.toFixed(2);summary()});for(const id of ['salePaymentList','saleRefundList'])d.querySelector('#'+id).addEventListener('input',()=>{snapshotInputs();summary()});d.querySelector('#addSaleItem').onclick=()=>{snapshotInputs();draft.items.push({name:'',qty:1,price:''});drawLists()};d.querySelector('#addSalePayment').onclick=()=>{snapshotInputs();draft.payments.push({id:uid(),date:today(),value:'',accountId:'',method:''});drawLists()};d.querySelector('#addSaleRefund').onclick=()=>{snapshotInputs();draft.refunds.push({id:uid(),date:today(),value:'',accountId:'',method:'',reason:''});drawLists()};d.addEventListener('click',e=>{const b=e.target.closest('[data-remove-item],[data-remove-pay],[data-remove-refund]');if(!b)return;snapshotInputs();if(b.dataset.removeItem!==undefined)draft.items.splice(+b.dataset.removeItem,1);if(b.dataset.removePay!==undefined)draft.payments.splice(+b.dataset.removePay,1);if(b.dataset.removeRefund!==undefined)draft.refunds.splice(+b.dataset.removeRefund,1);drawLists()});
+function validate(){snapshotInputs();const v=Number(fld('amount').value);if(!fld('description').value.trim())throw Error('Informe a descrição.');if(!validDate(fld('date').value))throw Error('Informe uma data válida.');if(!Number.isFinite(v)||v<=0)throw Error('Informe valor total maior que zero.');let cat=fld('category').value;if(cat==='__new__'){cat=fld('newCategory').value.trim();if(!cat)throw Error('Informe a nova categoria.');if(categories.some(c=>normalize(c.name)===normalize(cat)))throw Error('A categoria já existe. Selecione-a.')}let sub=fld('subcategory').value;if(sub==='__new__'){sub=fld('newSubcategory').value.trim();if(!sub)throw Error('Informe a nova subcategoria.')}if(draft.items.some(i=>!i.name?.trim()||!(Number(i.qty)>0)||!Number.isInteger(Number(i.qty))||!(Number(i.price)>0)))throw Error('Verifique nome, quantidade e preço de cada item.');if(draft.items.length&&Math.abs(draft.items.reduce((n,i)=>n+cents(Number(i.qty)*Number(i.price)),0)-cents(v))>0)throw Error('A soma dos itens deve corresponder ao total da venda.');for(const p of [...draft.payments,...draft.refunds]){if(!validDate(p.date)||!(Number(p.value)>0)||!p.accountId||!p.method)throw Error('Verifique data, valor, conta e forma dos recebimentos/devoluções.')}if(draft.refunds.some(p=>!p.reason?.trim()))throw Error('Informe o motivo das devoluções.');const rec=draft.payments.reduce((n,p)=>n+cents(p.value),0),refund=draft.refunds.reduce((n,p)=>n+cents(p.value),0);if(rec>cents(v))throw Error('O recebido não pode ultrapassar o total vendido.');if(refund>rec)throw Error('A devolução não pode ultrapassar o valor recebido.');return {id:draft.id,date:fld('date').value,description:fld('description').value.trim(),category:cat,subcategory:sub,amount:v,guestName:fld('guestName').value.trim(),reservationId:fld('reservationId').value,items:draft.items.map(i=>({name:i.name.trim(),qty:Number(i.qty),price:Number(i.price)})),payments:draft.payments.map(p=>({...p,value:Number(p.value)})),refunds:draft.refunds.map(p=>({...p,value:Number(p.value)})),notes:fld('notes').value.trim(),cancelled:draft.cancelled}}
+form.onsubmit=async e=>{e.preventDefault();err('');try{const updated=validate();const changedPayment=isEdit&&JSON.stringify({payments:original.payments,refunds:original.refunds})!==JSON.stringify({payments:updated.payments,refunds:updated.refunds});if(changedPayment&&!confirm('Você alterou recebimentos ou devoluções já registrados. Confirmar a correção financeira?'))return;const data=structuredClone(source());let env,cat,old;if(isEdit){env=data.find(e=>e.id===rec.env.id);cat=env?.categories.find(c=>c.id===rec.cat.id);old=cat?.entries.find(s=>s.id===rec.entry.id);if(!old)throw Error('Venda não encontrada.')}else{env=data.find(e=>(e.categories||[]).some(c=>c.mode==='sale'))||data.find(e=>normalize(e.name)==='vendas');if(!env){env={id:uid(),name:'Vendas',categories:[]};data.push(env)}cat=env.categories.find(c=>c.mode==='sale');if(!cat){cat={id:uid(),name:'Vendas avulsas',mode:'sale',flow:'in',classification:'revenue',entries:[],days:{}};env.categories.push(cat)}}if(fld('category').value==='__new__')categories.push({name:updated.category,subs:[]});if(fld('subcategory').value==='__new__'){const c=categories.find(c=>c.name===updated.category);if(c&&!c.subs.includes(updated.subcategory))c.subs.push(updated.subcategory)}saveCats();updated.history=[...(original?.history||[]),{date:new Date().toISOString(),action:isEdit?'Edição':'Cadastro',note:changedPayment?'Incluiu alteração financeira':''}];const saveEntry={...old,...updated,accountId:updated.payments[0]?.accountId||'',method:updated.payments[0]?.method||''};if(isEdit)cat.entries=cat.entries.map(x=>x.id===rec.entry.id?saveEntry:x);else cat.entries.push(saveEntry);await store(data);d.close();render();toast('Venda salva no mock.')}catch(ex){err(ex.message||'Erro ao salvar.')}};
+if(isEdit){d.querySelector('#saleDelete').onclick=async()=>{if(original.payments.length||original.refunds.length)return err('Vendas com movimentações registradas não podem ser excluídas. Use Cancelar.');if(!confirm('Excluir esta venda sem pagamentos?'))return;const data=structuredClone(source());const cat=data.find(x=>x.id===rec.env.id)?.categories.find(x=>x.id===rec.cat.id);cat.entries=cat.entries.filter(x=>x.id!==rec.entry.id);await store(data);d.close();render();toast('Venda excluída.')};d.querySelector('#saleCancel').onclick=async()=>{if(!confirm('Cancelar esta venda e preservar todo o histórico dos pagamentos?'))return;const data=structuredClone(source());const item=data.find(x=>x.id===rec.env.id)?.categories.find(x=>x.id===rec.cat.id)?.entries.find(x=>x.id===rec.entry.id);item.cancelled=true;item.history=[...(item.history||[]),{date:new Date().toISOString(),action:'Cancelamento'}];await store(data);d.close();render();toast('Venda cancelada; histórico preservado.')};}}
+function openReservation(rec){if(!rec?.entry)return;const r=getResItem(rec);const body=`<form id="gain-reservation-form"><div class="fv2-fields">${field('Hóspede',input('guest','text',r.name,'readonly'))}${field('Origem',input('origin','text',r.origin,'readonly'))}${field('Código de reserva',input('id','text',r.id,'readonly'))}${field('Data da reserva',input('date','date',r.entry.date,'readonly'))}${field('Checkout *',input('checkout','date',r.checkout||r.entry.date,'required'))}${field('Valor bruto *',input('gross','number',r.gross,'min="0.01" step="0.01" required'))}${field('Comissão Booking',input('commission','number',r.commission,'min="0" step="0.01"'))}${field('Conta de destino',select('accountId',acctOptions(),r.entry.accountId))}${field('Forma',select('method',methodsOptions(),r.entry.method))}${field('Repasse previsto',input('expected','date',r.expected,'readonly'))}${field('Data efetiva do recebimento',input('receiptDate','date',r.receiptDate))}<label class="gain-checkbox"><input name="confirmed" type="checkbox" ${r.paid?'checked':''}> Recebimento confirmado</label><div class="full gain-note">Simulação do modal compartilhado de Reservas. Este laboratório não inclui o PMS real. Alterações atualizam o lançamento da reserva no mock compartilhado; Ganhos o relê automaticamente.</div><div class="full gain-error" id="reservationError" role="alert"></div></div><div class="gain-form-footer"><button class="fv2-button primary" type="submit">Salvar alteração da reserva</button></div></form>`;const d=modal('Editar reserva vinculada',body);const form=d.querySelector('form');const fld=n=>form.elements.namedItem(n);const updateExpected=()=>{fld('expected').value=nextBusinessMonth(fld('checkout').value)};fld('checkout').addEventListener('change',updateExpected);if(r.origin==='Direta'){fld('commission').value=0;fld('commission').disabled=true}form.onsubmit=async e=>{e.preventDefault();const gross=Number(fld('gross').value),commission=Number(fld('commission').value);const error=d.querySelector('#reservationError');error.textContent='';if(!validDate(fld('checkout').value)||!(gross>0)||commission<0||commission>gross){error.textContent='Revise checkout, valor e comissão.';return}if(!confirm('Confirmar alteração nos dados da reserva de origem (mock)?'))return;const data=structuredClone(source());const entry=data.find(x=>x.id===rec.env.id)?.categories.find(x=>x.id===rec.cat.id)?.entries.find(x=>x.id===rec.entry.id);if(!entry){error.textContent='Reserva não encontrada no mock.';return}Object.assign(entry,{gross,amount:gross-commission,commission,checkout:fld('checkout').value,expected:fld('expected').value,receiptDate:fld('receiptDate').value,confirmed:fld('confirmed').checked,accountId:fld('accountId').value,method:fld('method').value});await store(data);d.close();render();toast('Reserva de origem atualizada no mock.')}}
+function csv(){const rows=state.tab==='sales'?filteredSales().map(({entry})=>{const s=augment(entry);return [s.date,s.description,s.category,s.subcategory,s.amount,received(s),refunded(s),status(s)]}):filteredReservations().map(r=>[r.entry.date,r.name,r.origin,r.gross,r.commission,r.net,r.expected,r.paid?'Confirmado':'Previsto']);const headers=state.tab==='sales'?['Data','Descrição','Categoria','Subcategoria','Total','Recebido','Devolvido','Status']:['Data','Hóspede','Origem','Bruto','Comissão','Líquido','Repasse previsto','Status'];const quote=x=>'"'+String(x??'').replace(/^[=+@\-\t\r]/,m=>"'"+m).replaceAll('"','""')+'"';const blob=new Blob(['\ufeff'+[headers,...rows].map(row=>row.map(quote).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`enjoy-ganhos-${state.tab}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+$('module-root').addEventListener('change',e=>{const f=e.target.closest('[data-filter]');if(!f)return;state[f.name]=f.value;render()});$('module-root').addEventListener('input',e=>{if(e.target.name==='query'){state.query=e.target.value;const p=e.target.selectionStart;render();const i=$('module-root').querySelector('[name=query]');i.focus();i.setSelectionRange(p,p)}});$('module-root').addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const action=b.dataset.action;if(action==='tab'){state.tab=b.dataset.tab;state.query='';state.account='';state.period='all';state.start='';state.end='';render()}if(action==='clear'){Object.assign(state,{query:'',account:'',period:'all',start:'',end:'',origin:'all'});render()}if(action==='sort'){state.sort=state.sort==='desc'?'asc':'desc';render()}if(action==='csv')csv();if(action==='new')openSale(null);if(action==='sale')openSale(findRecord(b));if(action==='reservation')openReservation(findRecord(b))});
+window.EnjoyStore.subscribe(KEY,render);render();
 })();
 
+});
 </script>
-<script>window.EnjoyMockReady.then(()=>window.EnjoyFinance.mount(document.getElementById('module-root'),'gains'));</script>
+
 </body></html>

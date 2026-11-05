@@ -15,10 +15,20 @@
   const uid = (prefix, i) => `${prefix}-${i}`;
   function seed() {
     const expenses = names.map((description, i) => ({ id: uid('expense', i), date: `2026-10-${String(14 + Math.floor(i / 3)).padStart(2, '0')}`, description, amount: amounts[i], accountId: 'picpay', method: i < 3 ? (i === 0 ? 'Pix' : 'pix') : 'Pix' }));
-    const gains = Array.from({length: 77}, (_, i) => ({ id: uid('booking', i), date: `2026-09-${String(4 + (i % 25)).padStart(2,'0')}`, description: `Booking — ${bookings[i % bookings.length]}`, amount: [304.47,481.95,160.65,340,270,520][i%6], accountId: 'hero', method: i%3===0 ? 'Plataforma' : 'Não informada' }));
+    const gains = Array.from({length: 77}, (_, i) => {
+      const date = `2026-09-${String(4 + (i % 25)).padStart(2,'0')}`;
+      const check = new Date(date+'T12:00:00'); check.setDate(check.getDate()+1);
+      const checkout = `${check.getFullYear()}-${String(check.getMonth()+1).padStart(2,'0')}-${String(check.getDate()).padStart(2,'0')}`;
+      return { id: uid('booking', i), date, checkout, description: `Booking — ${bookings[i % bookings.length]}`, amount: [304.47,481.95,160.65,340,270,520][i%6], accountId: 'hero', method: 'Plataforma', confirmed: false };
+    });
+    const direct = [
+      {id:'direct-0',date:'2026-10-21',checkout:'2026-10-24',description:'Direta — Camila Andrade',amount:210,accountId:'picpay',method:'Pix',confirmed:true,receiptDate:'2026-10-21'},
+      {id:'direct-1',date:'2026-10-26',checkout:'2026-10-28',description:'Direta — Pedro Lima',amount:160,accountId:'caixa',method:'Dinheiro',confirmed:true,receiptDate:'2026-10-26'},
+      {id:'direct-2',date:'2026-11-03',checkout:'2026-11-06',description:'Direta — Bruna Silva',amount:320,accountId:'inter',method:'Transferência',confirmed:false}
+    ];
     return [
       { id:'env-pay', name:'Pagamentos', categories:[{ id:'cat-general', name:'Geral', flow:'out', classification:'expense', entries:expenses }] },
-      { id:'env-stay', name:'Hospedagem', categories: gains.map((entry, i) => ({ id:uid('cat-booking',i), name:entry.description, flow:'in', classification:'revenue', reservationId:uid('reservation',i), entries:[entry] })) },
+      { id:'env-stay', name:'Hospedagem', categories: [...gains.map((entry, i) => ({ id:uid('cat-booking',i), name:entry.description, flow:'in', classification:'revenue', reservationId:uid('reservation',i), entries:[entry] })), ...direct.map((entry,i)=>({id:uid('cat-direct',i),name:entry.description,flow:'in',classification:'revenue',reservationId:uid('direct-reservation',i),entries:[entry]}))] },
       { id:'env-sales', name:'Vendas', categories:[{id:'cat-sales',name:'Vendas avulsas',flow:'in',classification:'revenue',mode:'sale',entries:[]}] },
       { id:'env-invest', name:'Investimentos', categories:[{id:'cat-invest',name:'Equipamentos',flow:'out',classification:'investment',entries:[]}] }
     ];
@@ -64,7 +74,7 @@
   };
   window.EnjoyDataKeys = { financeSettings: 'enjoy-finance-settings' };
   window.EnjoyReceipts = { accounts: () => accountList, accountName: id => accountList.find(a => a.id === id)?.name || 'Sem conta informada', reservationIdForMovement: category => category.reservationId || '' };
-  const reservations = Array.from({length:77},(_,i)=>({id:uid('reservation',i),name:bookings[i%bookings.length],channel:'Booking',checkin:`2026-09-${String(4+i%25).padStart(2,'0')}`}));
+  const reservations = [...Array.from({length:77},(_,i)=>({id:uid('reservation',i),name:bookings[i%bookings.length],channel:'Booking',checkin:`2026-09-${String(4+i%25).padStart(2,'0')}`})),{id:'direct-reservation-0',name:'Camila Andrade',channel:'Direta',checkin:'2026-10-21'},{id:'direct-reservation-1',name:'Pedro Lima',channel:'Direta',checkin:'2026-10-26'},{id:'direct-reservation-2',name:'Bruna Silva',channel:'Direta',checkin:'2026-11-03'}];
   window.EnjoyOperationsData = { KEYS:{reservations:'mock-reservations'}, records: key => key === 'mock-reservations' ? reservations : [] };
   window.EnjoyPermissions = { can: () => true };
   window.EnjoyAccess = { canModule: () => true };
