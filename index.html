@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Enjoy Gestão · Laboratório Financeiro</title>
   <link rel="stylesheet" href="styles/variables.css">
-  <link rel="stylesheet" href="styles/financeiro.css">
   <link rel="stylesheet" href="styles/shell.css">
+  <link rel="stylesheet" href="styles/frame.css">
 </head>
 <body>
   <aside class="sidebar" id="sidebar">
@@ -25,10 +25,9 @@
   </aside>
   <div class="workspace">
     <header class="topbar"><button id="mobile-menu" aria-label="Abrir menu">☰</button><div><h1 id="page-title">Visão geral</h1><p id="page-description">Resumo de ganhos, despesas e investimentos com filtros cumulativos.</p></div><div class="status"><span class="dot"></span> Laboratório · Mock local</div></header>
-    <main class="content" id="finance-root"></main>
+    <main class="content"><iframe id="module-frame" title="Módulo financeiro" src="modulos/visao-geral/index.html" loading="eager"></iframe></main>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="scripts/mock.js"></script>
-  <script src="scripts/financeiro-original.js"></script>
+  <script src="mock/mock.js"></script>
   <script src="scripts/app.js"></script>
 </body></html>

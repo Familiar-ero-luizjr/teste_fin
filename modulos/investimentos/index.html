@@ -1,3 +1,223 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Investimentos · Enjoy Gestão V2</title><style>
+/* Tokens visuais do Enjoy Gestão. Fonte: design system do baseline, preservado sem lógica de negócio. */
+:root {
+  color-scheme: light;
+
+  /* Typography */
+  --font-family-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-md: 15px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 22px;
+  --font-size-4xl: 27px;
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.35;
+  --line-height-body: 1.5;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-strong: 800;
+
+  /* Spacing — 2px base, 4px rhythm */
+  --space-0: 0;
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-3-5: 14px;
+  --space-4: 16px;
+  --space-4-5: 18px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+
+  /* Radius */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --radius-pill: 999px;
+
+  /* Control density */
+  --control-height-compact: 34px;
+  --control-height-sm: 36px;
+  --control-height-md: 40px;
+  --control-height-lg: 46px;
+  --touch-target-min: 44px;
+
+  /* Neutral / surface */
+  --color-white: #ffffff;
+  --color-canvas: #f4f5f3;
+  --color-surface-subtle: #fbfcfb;
+  --color-surface-hover: #f8faf9;
+  --color-surface-active: #f6f8f7;
+  --color-border-soft: #edf0ee;
+  --color-border: #e2e6e3;
+  --color-border-strong: #ccd7d2;
+  --color-text-strong: #15251f;
+  --color-text: #1e2825;
+  --color-text-secondary: #53605c;
+  --color-text-muted: #71817b;
+  --color-text-faint: #8b9591;
+
+  /* Brand */
+  --color-brand-900: #183d2e;
+  --color-brand-800: #1f4a43;
+  --color-brand-700: #285e54;
+  --color-brand-600: #36705d;
+  --color-brand-500: #78a294;
+  --color-brand-300: #9fc2b8;
+  --color-brand-200: #d8e7e2;
+  --color-brand-100: #eaf2ef;
+  --color-brand-50: #f4f8f6;
+
+  /* Semantic states */
+  --color-success-700: #247153;
+  --color-success-600: #2f8a66;
+  --color-success-100: #eaf6f0;
+  --color-danger-700: #a34f49;
+  --color-danger-600: #c75c52;
+  --color-danger-200: #efd0cd;
+  --color-danger-100: #faeeec;
+  --color-danger-50: #fff9f8;
+  --color-warning-800: #5b4b11;
+  --color-warning-700: #946d28;
+  --color-warning-500: #c7924c;
+  --color-warning-300: #e8cf72;
+  --color-warning-200: #ead9bd;
+  --color-warning-100: #fff6e3;
+  --color-warning-50: #fffdf8;
+  --color-info-700: #5b6d7d;
+  --color-info-100: #eef2f6;
+  --color-accent-700: #765b86;
+  --color-accent-100: #f3eef7;
+
+  /* RGB channels used for translucency without recreating colors per module */
+  --rgb-brand: 40 94 84;
+  --rgb-brand-strong: 24 61 46;
+  --rgb-success: 36 113 83;
+  --rgb-shadow: 31 44 39;
+  --rgb-overlay: 20 34 29;
+  --rgb-canvas: 244 245 243;
+
+  /* Shadows */
+  --shadow-none: none;
+  --shadow-xs: 0 1px 3px rgb(var(--rgb-shadow) / 0.12);
+  --shadow-sm: 0 2px 6px rgb(var(--rgb-shadow) / 0.08);
+  --shadow-card: 0 8px 28px rgb(var(--rgb-shadow) / 0.05);
+  --shadow-popover: 0 10px 30px rgb(var(--rgb-shadow) / 0.15);
+  --shadow-float: 0 5px 16px rgb(var(--rgb-shadow) / 0.14);
+  --shadow-dialog: 0 24px 70px rgb(var(--rgb-overlay) / 0.24);
+  --shadow-sidebar: 2px 0 8px -5px rgb(var(--rgb-shadow) / 0.18);
+  --shadow-sidebar-mobile: 8px 0 24px rgb(var(--rgb-shadow) / 0.14);
+
+  /* Interaction */
+  --focus-border: var(--color-brand-500);
+  --focus-ring: 0 0 0 3px rgb(var(--rgb-brand) / 0.10);
+  --transition-fast: 140ms ease;
+  --transition-base: 180ms ease;
+  --transition-slow: 250ms ease;
+
+  /* Layout */
+  --content-max-width: 1450px;
+  --sidebar-width: 256px;
+  --sidebar-width-collapsed: 80px;
+  --topbar-height: 76px;
+  --sidebar-brand-height: 80px;
+
+  /* Compatibility aliases: existing modules can migrate incrementally. */
+  --bg: var(--color-canvas);
+  --panel: var(--color-white);
+  --ink: var(--color-text);
+  --muted: var(--color-text-muted);
+  --line: var(--color-border);
+  --brand: var(--color-brand-700);
+  --brand2: var(--color-brand-800);
+  --brand-dark: var(--color-brand-900);
+  --soft: var(--color-brand-100);
+  --good: var(--color-success-700);
+  --bad: var(--color-danger-700);
+  --warn: var(--color-warning-700);
+  --goodbg: var(--color-success-100);
+  --badbg: var(--color-danger-100);
+  --warnbg: var(--color-warning-100);
+  --r: var(--radius-xl);
+  --shadow: var(--shadow-card);
+}
+
+
+/* Painel financeiro: superfícies, filtros, tabela e formulários do módulo Financeiro. */
+.fv2-module{background:var(--color-white);border:1px solid var(--color-border);border-radius:var(--radius-xl);box-shadow:var(--shadow-card);overflow:hidden;color:var(--color-text)}
+.fv2-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:22px 24px 18px;border-bottom:1px solid var(--color-border-soft)}
+.fv2-heading h2{font-size:var(--font-size-2xl);line-height:1.2;margin:5px 0}
+.fv2-heading p{color:var(--color-text-muted);margin:0;font-size:var(--font-size-sm)}
+.fv2-heading>div>span{font-size:11px;letter-spacing:.12em;font-weight:800;color:var(--color-brand-700)}
+.fv2-heading-actions{display:flex;gap:10px;flex-wrap:wrap}
+.fv2-tabs{display:flex;gap:0;padding:14px 24px 0;border-bottom:1px solid var(--color-border);background:var(--color-white)}
+.fv2-tab{appearance:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:10px 14px;background:transparent;color:var(--color-text-muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}.fv2-tab:hover{color:var(--color-brand-800)}.fv2-tab.is-active{border-bottom-color:var(--color-brand-700);color:var(--color-brand-900)}
+.fv2-button{border:1px solid var(--color-border);min-height:38px;border-radius:var(--radius-md);padding:8px 12px;font-size:var(--font-size-sm);font-weight:700;background:var(--color-white);color:var(--color-brand-900)}
+.fv2-button.primary{background:var(--color-brand-700);color:#fff;border-color:var(--color-brand-700)}
+.fv2-button:hover{filter:brightness(.97)}
+.fv2-filters{display:flex;align-items:end;flex-wrap:wrap;gap:12px;padding:18px 24px;background:var(--color-surface-subtle);border-bottom:1px solid var(--color-border)}
+.fv2-filters label{display:grid;gap:6px;font-weight:700;font-size:12px;color:var(--color-text-secondary)}
+.fv2-filters select,.fv2-filters input{height:40px;min-width:155px;max-width:260px;padding:8px 12px;border:1px solid var(--color-border-strong);border-radius:var(--radius-md);background:#fff;color:var(--color-text-strong);font-weight:400;font-size:14px}
+.fv2-filters .fv2-search{flex:1;min-width:170px}.fv2-filters .fv2-search input{width:100%;max-width:none}
+.fv2-table-heading{padding:18px 24px 13px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.fv2-table-heading h3{margin:0;font-size:var(--font-size-lg);color:var(--color-text-strong)}.fv2-table-heading p{margin:3px 0 0;color:var(--color-text-muted);font-size:var(--font-size-xs)}
+.fv2-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--color-border)}
+.fv2-cards article{display:grid;gap:8px;padding:17px 20px;border-right:1px solid var(--color-border-soft);background:var(--color-surface-subtle)}.fv2-cards article:last-child{border-right:0}
+.fv2-cards small{font-size:12px;color:var(--color-text-muted)}.fv2-cards strong{font-size:21px;color:var(--color-text-strong);font-weight:800}.fv2-cards span{font-size:11px;color:var(--color-text-faint)}
+.fv2-in{color:var(--color-success-700)!important}.fv2-out{color:var(--color-danger-700)!important}
+.fv2-scroll{overflow:auto;margin:0 24px 24px;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.fv2-table{width:100%;min-width:1160px;border-collapse:collapse;font-size:13px}
+.fv2-table th{background:var(--color-surface-subtle);color:var(--color-text-muted);font-size:11px;letter-spacing:.055em;text-transform:uppercase;padding:12px 11px;white-space:nowrap;text-align:left}
+.fv2-table td{padding:13px 11px;border-top:1px solid var(--color-border-soft);vertical-align:middle}
+.fv2-table td small{display:block;margin-top:4px;color:var(--color-text-faint);font-size:11px}
+.fv2-table td:first-child{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700}.fv2-description{min-width:225px;max-width:350px}.fv2-description strong{font-weight:700;color:var(--color-text-strong)}
+.fv2-chip{display:inline-block;border:1px solid var(--color-border);background:var(--color-brand-50);padding:3px 8px;border-radius:99px;color:var(--color-brand-900);font-size:12px}
+.fv2-flow{display:inline-block;border-radius:99px;padding:4px 8px;font-size:11px;font-weight:700}.fv2-flow.in{background:var(--color-success-100);color:var(--color-success-700)}.fv2-flow.out{background:var(--color-danger-100);color:var(--color-danger-700)}
+.fv2-money{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700}.fv2-money.in{color:var(--color-success-700)}.fv2-money.out{color:var(--color-danger-700)}
+.fv2-table tfoot th,.fv2-table tfoot td{font-weight:800;background:var(--color-surface-subtle);border-top:1px solid var(--color-border)}
+.fv2-sort,.fv2-text-button{border:0;background:transparent;color:var(--color-brand-700);font-weight:700;padding:4px 0}.fv2-text-button{text-decoration:underline;text-underline-offset:3px;white-space:nowrap;font-size:12px}
+.fv2-empty{text-align:center;padding:28px!important;color:var(--color-text-muted)}
+.fv2-muted{color:var(--color-text-faint)}
+.fv2-dialog{border:0;border-radius:var(--radius-xl);padding:0;width:min(600px,calc(100vw - 26px));max-height:92vh;box-shadow:0 20px 65px #0003;color:var(--color-text);overflow:auto}
+.fv2-dialog::backdrop{background:#12261c95}.fv2-dialog-form header{padding:20px 24px;border-bottom:1px solid var(--color-border)}.fv2-dialog-form header h2{margin:0 0 6px;font-size:20px}.fv2-dialog-form header p{color:var(--color-text-muted);font-size:13px;margin:0}
+.fv2-fields{padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:15px}.fv2-fields label{display:grid;gap:6px;font-size:12px;font-weight:700;color:var(--color-text-secondary)}
+.fv2-fields input,.fv2-fields select{width:100%;min-width:0;min-height:40px;padding:8px 10px;background:#fff;border:1px solid var(--color-border-strong);border-radius:var(--radius-md);color:var(--color-text)}
+.fv2-dialog-form footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid var(--color-border)}
+.fv2-form-error{margin:0 24px 14px;color:var(--color-danger-700);font-weight:700;font-size:13px}
+.fv2-dialog [data-fv2-new-category]{display:grid;grid-template-columns:1fr 1fr;gap:15px;grid-column:1/-1}.fv2-dialog .fv2-fields small{font-weight:400;color:var(--color-text-muted)}
+@media(max-width:1000px){.fv2-cards{grid-template-columns:repeat(2,1fr)}.fv2-cards article:nth-child(2){border-right:0}.fv2-cards article:nth-child(-n+2){border-bottom:1px solid var(--color-border)}}
+@media(max-width:700px){.fv2-heading{align-items:flex-start;padding:16px;flex-direction:column}.fv2-tabs{padding:10px 16px 0;overflow:auto}.fv2-tab{white-space:nowrap;padding:10px 11px}.fv2-filters{padding:14px 16px}.fv2-filters label{flex:1;min-width:145px}.fv2-filters select,.fv2-filters input{width:100%;max-width:none;min-width:0}.fv2-scroll{margin:0 12px 16px}.fv2-table-heading{padding:16px 12px}.fv2-cards{grid-template-columns:1fr 1fr}.fv2-cards article{padding:12px}.fv2-cards strong{font-size:16px}.fv2-fields{grid-template-columns:1fr;padding:15px}.fv2-dialog [data-fv2-new-category]{grid-template-columns:1fr}}
+
+*{box-sizing:border-box}body{margin:0;padding:28px;background:var(--color-canvas);font-family:var(--font-family-sans);font-size:14px;color:var(--color-text)}button,input,select{font:inherit}button{cursor:pointer}.module-container{max-width:1450px;margin:auto}.toast{position:fixed;bottom:20px;right:20px;background:#183d2e;color:#fff;padding:12px 16px;border-radius:9px;display:none;z-index:100}.toast.visible{display:block}.fv2-dialog-form{margin:0}
+@media(max-width:700px){body{padding:12px}}
+</style></head><body>
+<main class="module-container" id="module-root" aria-label="Módulo Investimentos"></main>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<!-- ÚNICA DEPENDÊNCIA EXTERNA: mock compartilhado com os demais módulos -->
+<script src="../../mock/mock.js"></script>
+<script>
+/* Lógica original do Financeiro V2 incorporada a este módulo. */
 (function financeShared() {
   "use strict";
   const key = "enjoy_resumo_movimentacoes_v1";
@@ -420,3 +640,7 @@
   }
   window.EnjoyFinance = Object.freeze({ mount, records, filtered, totals, inArea, matches, expenseEnvironments, saveExpenseOccurrence, saveExpenseOccurrences, editExpenseEntry: row => buildDialog("expenses", row) });
 })();
+
+</script>
+<script>window.EnjoyMockReady.then(()=>window.EnjoyFinance.mount(document.getElementById('module-root'),'investments'));</script>
+</body></html>

@@ -5,8 +5,9 @@
     expenses: ['Despesas', 'Controle custos e despesas na tabela geral.'],
     investments: ['Investimentos', 'Acompanhe investimentos sem misturar com o saldo operacional.']
   };
-  const root = document.getElementById('finance-root');
+  const frame = document.getElementById('module-frame');
   const sidebar = document.getElementById('sidebar');
+  const paths = {overview:'visao-geral',gains:'ganhos',expenses:'despesas',investments:'investimentos'};
   function open(page) {
     if (!pages[page]) page = 'overview';
     document.getElementById('page-title').textContent = pages[page][0];
@@ -16,8 +17,8 @@
       item.classList.toggle('active', item.dataset.page === page);
       item.setAttribute('aria-current', item.dataset.page === page ? 'page' : 'false');
     });
-    root.replaceChildren();
-    window.EnjoyFinance.mount(root, page);
+    frame.src = `modulos/${paths[page]}/index.html`;
+    frame.title = `Financeiro · ${pages[page][0]}`;
     sidebar.classList.remove('mobile-open');
     history.replaceState(null, '', `#${page}`);
   }

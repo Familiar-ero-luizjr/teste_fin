@@ -1,0 +1,3 @@
+.content{padding:0!important;max-width:none!important}
+#module-frame{display:block;width:100%;height:calc(100vh - 114px);min-height:580px;border:0;background:var(--color-canvas)}
+@media(max-width:700px){#module-frame{height:calc(100vh - 100px);min-height:450px}}

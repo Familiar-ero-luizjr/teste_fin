@@ -33,14 +33,66 @@
     async writeAsync(key, value) { if (key !== KEY) throw new Error('Este laboratório só permite alterar dados mock.'); data = structuredClone(value); try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch { /* modo de navegação sem persistência */ } notify(key); },
     subscribe(key, fn) { const list = subscriptions.get(key) || []; list.push(fn); subscriptions.set(key,list); return () => subscriptions.set(key, list.filter(x => x !== fn)); }
   };
+  // A ponte postMessage funciona inclusive quando file:// atribui origens
+  // diferentes aos HTMLs. O index é o dono do mock enquanto estiver aberto.
+  const inFrame = Boolean(window.parent && window.parent !== window);
+  let resolveReady;
+  window.EnjoyMockReady = new Promise(resolve => { resolveReady = resolve; });
+  window.addEventListener?.('message', event => {
+    const msg = event.data;
+    if (!msg || msg.source !== 'enjoy-financeiro-lab') return;
+    if (inFrame && event.source !== window.parent) return;
+    if (!inFrame && event.source !== document.getElementById('module-frame')?.contentWindow) return;
+    if (!inFrame && msg.type === 'request') {
+      event.source?.postMessage({source:'enjoy-financeiro-lab',type:'snapshot',data:structuredClone(data)},'*');
+    }
+    if (!inFrame && msg.type === 'write') window.EnjoyStore.writeAsync(KEY,msg.data);
+    if (inFrame && msg.type === 'snapshot') {
+      data = structuredClone(msg.data);
+      notify(KEY);
+      resolveReady();
+    }
+  });
+  if (inFrame) {
+    window.parent.postMessage({source:'enjoy-financeiro-lab',type:'request'},'*');
+    setTimeout(resolveReady,800); // fallback ao abrir como HTML isolado
+  } else resolveReady();
+  const originalWrite = window.EnjoyStore.writeAsync;
+  window.EnjoyStore.writeAsync = async (key,value) => {
+    await originalWrite(key,value);
+    if (inFrame && key===KEY) window.parent.postMessage({source:'enjoy-financeiro-lab',type:'write',data:structuredClone(value)},'*');
+  };
   window.EnjoyDataKeys = { financeSettings: 'enjoy-finance-settings' };
   window.EnjoyReceipts = { accounts: () => accountList, accountName: id => accountList.find(a => a.id === id)?.name || 'Sem conta informada', reservationIdForMovement: category => category.reservationId || '' };
   const reservations = Array.from({length:77},(_,i)=>({id:uid('reservation',i),name:bookings[i%bookings.length],channel:'Booking',checkin:`2026-09-${String(4+i%25).padStart(2,'0')}`}));
   window.EnjoyOperationsData = { KEYS:{reservations:'mock-reservations'}, records: key => key === 'mock-reservations' ? reservations : [] };
   window.EnjoyPermissions = { can: () => true };
-  window.EnjoyAccess = { canModule: module => module !== 'reservations' };
+  window.EnjoyAccess = { canModule: () => true };
+  // A ação original "Abrir reserva" é preservada por um modal mock,
+  // sem carregar ou modificar o módulo Hospedagem real.
   window.EnjoyNavigation = { open: () => {} };
+  window.EnjoyModules = { reservations: { focusReservation(id) {
+    const reservation = reservations.find(item => item.id === id);
+    if (!reservation) return false;
+    const dialog = document.createElement('dialog');
+    dialog.className = 'fv2-dialog';
+    const form = document.createElement('div');
+    form.className = 'fv2-dialog-form';
+    const header = document.createElement('header');
+    const title = document.createElement('h2'); title.textContent = 'Reserva vinculada · Mock';
+    const intro = document.createElement('p'); intro.textContent = 'Prévia local da reserva de origem. Nenhum dado real é alterado.';
+    header.append(title,intro);
+    const details = document.createElement('div'); details.className = 'fv2-fields';
+    for (const [label,value] of [['Hóspede',reservation.name],['Origem',reservation.channel],['Check-in',reservation.checkin.split('-').reverse().join('/')],['Identificador',reservation.id]]) {
+      const item=document.createElement('label');item.textContent=label;
+      const input=document.createElement('input');input.value=value;input.readOnly=true;item.append(input);details.append(item);
+    }
+    const footer=document.createElement('footer');
+    const close=document.createElement('button');close.type='button';close.className='fv2-button secondary';close.textContent='Fechar';close.addEventListener('click',()=>dialog.close());footer.append(close);
+    form.append(header,details,footer);dialog.append(form);document.body.append(dialog);
+    dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();return true;
+  } } };
   window.EnjoyUI = { success: message => toast(message), warning: message => toast(message) };
-  function toast(message) { const el=document.getElementById('toast'); el.textContent=message; el.classList.add('visible'); setTimeout(()=>el.classList.remove('visible'),3500); }
+  function toast(message) { const el=document.getElementById('toast'); if (!el) return; el.textContent=message; el.classList.add('visible'); setTimeout(()=>el.classList.remove('visible'),3500); }
   window.EnjoyLab = { reset() { localStorage.removeItem(STORE_KEY); location.reload(); }, exportJSON() { return JSON.stringify(data,null,2); } };
 })();

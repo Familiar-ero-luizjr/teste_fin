@@ -1,24 +1,36 @@
-# Enjoy Gestão V2 — Laboratório Financeiro
+# Enjoy Gestão V2 — Laboratório Financeiro Modular
 
-Abra `index.html` no Chrome ou Edge, mesmo sem internet. O menu abre na **Visão geral** e alterna entre Visão geral, Ganhos, Despesas e Investimentos sem sair da janela.
+Abra **`index.html`** no Chrome ou Edge. O menu inicia na Visão geral e carrega cada módulo na área de conteúdo.
 
-## Fidelidade ao código original
+## Estrutura
 
-- `scripts/financeiro-original.js` é uma cópia do componente financeiro de `modules/financeiro/painel/shared/index.js` do código-fonte fornecido, com uma adaptação mínima para montar uma tela por vez.
-- `styles/financeiro.css` e `styles/variables.css` são cópias dos estilos originais.
-- `styles/shell.css` reproduz o menu e o cabeçalho conforme as capturas, isolados do restante do aplicativo.
-- `scripts/mock.js` substitui o acesso às contas, reservas, permissões e persistência remota por dados de demonstração e `localStorage`.
+```text
+index.html                         Menu e header, sem regra financeira
+modulos/
+  visao-geral/index.html          HTML, estilos e funcionalidades incorporados
+  visao-geral/CONTRATO.md
+  ganhos/index.html               HTML, estilos e funcionalidades incorporados
+  ganhos/CONTRATO.md
+  despesas/index.html             HTML, estilos e funcionalidades incorporados
+  despesas/CONTRATO.md
+  investimentos/index.html        HTML, estilos e funcionalidades incorporados
+  investimentos/CONTRATO.md
+mock/mock.js                      Único arquivo de dados compartilhado pelos quatro módulos
+styles/                            Apenas estilos do menu principal
+scripts/app.js                    Apenas navegação do menu principal
+AUDITORIA_FUNCIONAL.md            Auditoria da paridade funcional
+```
 
-## Funcionamento
+Cada módulo pode ser aberto diretamente e **editado isoladamente**. Os HTMLs trazem todo o CSS e JavaScript financeiro original incorporados, e não importam arquivos de outros módulos. Só `../../mock/mock.js` é externo.
 
-- Filtros cumulativos por conta, ambiente, texto, período, intervalo e frequência (em Despesas).
-- Ordenação por data, totais, exportação CSV, abas de Ganhos e Vendas.
-- Cadastro, edição e recorrência de despesas, criação de categoria e modais com validação baseados no componente original.
-- Investimentos têm registro próprio e não são abatidos do saldo operacional.
-- Alterações são salvas **somente neste navegador**, em dados mockados. Nada é enviado ao Supabase.
+Quando os HTMLs são abertos **pelo index**, a pasta mock compartilha os registros entre os módulos por mensagens locais entre janelas. Ao abrir um HTML sozinho, ele funciona com mock próprio, que pode ter histórico separado no navegador.
 
-Para restaurar o mock inicial, abra o console do navegador (F12) e execute `EnjoyLab.reset()`.
+## Operação e segurança
 
-## Limites intencionais
+- Cadastros, alterações e recorrências só mudam dados fictícios locais.
+- O menu não navega para módulos externos ao Financeiro.
+- Não há API, autenticação, Supabase ou recursos CDN.
+- Para restaurar o mock inicial pelo menu, abra o console (F12) e execute `EnjoyLab.reset()`.
+- Para alterar exclusivamente um módulo, edite seu `index.html` e seu `CONTRATO.md`; não é preciso rodar o gerador.
 
-As reservas do mock não abrem o módulo de Hospedagem, pois o laboratório é restrito ao Financeiro. Os lançamentos iniciais são fictícios e não reproduzem fielmente os valores reais do banco. O botão de sincronização é apenas um indicador do ambiente local.
+O ZIP de uso foi empacotado sem geradores nem fontes auxiliares: cada tela fica totalmente editável em sua própria pasta, sem risco de uma regeneração substituir suas alterações.
