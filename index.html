@@ -17,6 +17,7 @@
         <button class="nav-item" data-page="gains"><span class="symbol">↙</span><span class="nav-label">Ganhos</span></button>
         <button class="nav-item" data-page="expenses"><span class="symbol">↗</span><span class="nav-label">Despesas</span></button>
         <button class="nav-item" data-page="investments"><span class="symbol">◈</span><span class="nav-label">Investimentos</span></button>
+        <button class="nav-item" data-page="decisions"><span class="symbol">▤</span><span class="nav-label">Decisões</span></button>
       </nav>
       <p class="section-label secondary-heading">Hospedagem</p><div class="inactive"><span>▦</span><span class="nav-label">Reservas e ocupação</span></div><div class="inactive"><span>▤</span><span class="nav-label">Quartos e leitos</span></div><div class="inactive"><span>✦</span><span class="nav-label">Limpeza e preparação</span></div>
       <p class="section-label secondary-heading">Operação</p><div class="inactive"><span>⚙</span><span class="nav-label">Configurações</span></div>
@@ -29,5 +30,43 @@
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="mock/mock.js"></script>
-  <script src="scripts/app.js"></script>
+  <script>
+  (() => {
+    const pages = {
+      overview: ['Visão geral', 'Resumo de ganhos, despesas e investimentos com filtros cumulativos.', 'visao-geral'],
+      gains: ['Ganhos', 'Consulte as entradas registradas e recebimentos de reservas.', 'ganhos'],
+      expenses: ['Despesas', 'Controle custos e despesas na tabela geral.', 'despesas'],
+      investments: ['Investimentos', 'Acompanhe investimentos sem misturar com o saldo operacional.', 'investimentos'],
+      decisions: ['Decisões', 'Registro das definições dos quatro módulos financeiros.', 'decisoes']
+    };
+    const frame = document.getElementById('module-frame');
+    const sidebar = document.getElementById('sidebar');
+    function open(page) {
+      if (!pages[page]) page='overview';
+      const [title, description, folder] = pages[page];
+      document.getElementById('page-title').textContent = title;
+      document.getElementById('page-description').textContent = description;
+      document.title = title + ' · Enjoy Gestão Financeiro';
+      document.querySelectorAll('[data-page]').forEach(b => {
+        const active=b.dataset.page===page;
+        b.classList.toggle('active',active);
+        b.setAttribute('aria-current',active?'page':'false');
+      });
+      const url = 'modulos/'+folder+'/index.html';
+      if (frame.getAttribute('src')!==url) frame.src=url;
+      frame.title='Financeiro · '+title;
+      sidebar.classList.remove('mobile-open');
+      if (location.hash !== '#'+page) history.replaceState(null,'','#'+page);
+    }
+    document.querySelectorAll('[data-page]').forEach(button => button.addEventListener('click', () => open(button.dataset.page)));
+    document.getElementById('collapse').addEventListener('click', () => {
+      const collapsed=sidebar.classList.toggle('collapsed');
+      document.getElementById('collapse').textContent=collapsed?'›':'‹';
+      document.getElementById('collapse').setAttribute('aria-expanded',String(!collapsed));
+    });
+    document.getElementById('mobile-menu').addEventListener('click',()=>sidebar.classList.toggle('mobile-open'));
+    window.addEventListener('hashchange',()=>open(location.hash.slice(1)));
+    open(location.hash.slice(1)||'overview');
+  })();
+  </script>
 </body></html>
