@@ -2,5 +2,105 @@
   "schemaVersion": 1,
   "app": "enjoy-financeiro-decisoes",
   "module": "ganhos",
-  "decisions": []
+  "decisions": [
+    {
+      "id": "ganhos-01",
+      "code": "01",
+      "title": "Escopo de Ganhos",
+      "description": "Consultar receitas de reservas e gerenciar vendas avulsas em frentes distintas; não cadastrar reservas nem duplicar a fonte de hospedagem.",
+      "status": "DECIDED",
+      "source": "ENJOY_GANHOS_DECISOES_CONSOLIDADAS.md — 05/11/2026",
+      "updatedAt": null
+    },
+    {
+      "id": "ganhos-02",
+      "code": "02",
+      "title": "Reservas como fonte de verdade",
+      "description": "Reservas/PMS mantém diárias, valores e pagamentos de hospedagem; Ganhos apenas consulta e analisa. Editar reserva deve abrir o modal real de Reservas sobre Ganhos e salvar na origem; integração real pendente.",
+      "status": "DECIDED",
+      "source": "ENJOY_GANHOS_DECISOES_CONSOLIDADAS.md — 05/11/2026",
+      "updatedAt": null
+    },
+    {
+      "id": "ganhos-03",
+      "code": "03",
+      "title": "Booking e reservas diretas",
+      "description": "Distinguir Booking.com e reservas diretas, com bruto, comissão, líquido, estado e previsão de repasse. Previsão Booking: primeiro dia útil do mês após checkout; feriados e liquidação real pendentes.",
+      "status": "DECIDED",
+      "source": "ENJOY_GANHOS_DECISOES_CONSOLIDADAS.md — 05/11/2026",
+      "updatedAt": null
+    },
+    {
+      "id": "ganhos-04",
+      "code": "04",
+      "title": "Visual e categorias",
+      "description": "Preservar design, tabela, filtros, indicadores, CSV e navegação. Remover Ambiente de Ganhos; vendas com categoria obrigatória, subcategoria opcional e criação sob demanda.",
+      "status": "DECIDED",
+      "source": "ENJOY_GANHOS_DECISOES_CONSOLIDADAS.md — 05/11/2026",
+      "updatedAt": null
+    },
+    {
+      "id": "ganhos-05",
+      "code": "05",
+      "title": "Venda rápida e itens opcionais",
+      "description": "Cadastrar venda com descrição, data, categoria e valor, sem exigir itens. Permitir itens, quantidade, preço e observações opcionais; conciliação total versus soma de itens ainda pendente.",
+      "status": "DECIDED",
+      "source": "ENJOY_GANHOS_DECISOES_CONSOLIDADAS.md — 05/11/2026",
+      "updatedAt": null
+    },
+    {
+      "id": "ganhos-06",
+      "code": "06",
+      "title": "Recebimentos independentes",
+      "description": "Uma venda pode ter zero, um ou vários recebimentos parciais, cada um com data, conta, forma e valor. Distinguir vendido, recebido e pendente, sem dupla contagem.",
+      "status": "DECIDED",
+      "source": "ENJOY_GANHOS_DECISOES_CONSOLIDADAS.md — 05/11/2026",
+      "updatedAt": null
+    },
+    {
+      "id": "ganhos-07",
+      "code": "07",
+      "title": "Vínculo opcional a hóspedes e reservas",
+      "description": "Vincular venda a hóspede e/ou reserva apenas como referência; não alterar automaticamente valores de hospedagem.",
+      "status": "DECIDED",
+      "source": "ENJOY_GANHOS_DECISOES_CONSOLIDADAS.md — 05/11/2026",
+      "updatedAt": null
+    },
+    {
+      "id": "ganhos-08",
+      "code": "08",
+      "title": "Edição financeira com confirmação",
+      "description": "Permitir edição de venda e recebimentos já lançados no mesmo formulário, exigindo confirmação explícita antes de efetivar alterações financeiras.",
+      "status": "DECIDED",
+      "source": "ENJOY_GANHOS_DECISOES_CONSOLIDADAS.md — 05/11/2026",
+      "updatedAt": null
+    },
+    {
+      "id": "ganhos-09",
+      "code": "09",
+      "title": "Exclusão e cancelamento protegidos",
+      "description": "Excluir somente vendas sem movimentações, mediante confirmação; cancelar vendas com movimentações preservando histórico e valores recebidos.",
+      "status": "DECIDED",
+      "source": "ENJOY_GANHOS_DECISOES_CONSOLIDADAS.md — 05/11/2026",
+      "updatedAt": null
+    },
+    {
+      "id": "ganhos-10",
+      "code": "10",
+      "title": "Devoluções parciais e totais",
+      "description": "Registrar devolução como operação separada, com valor, data, conta, forma e motivo; limite de valor efetivamente recebido e não devolvido; devolução parcial não obriga cancelar a venda.",
+      "status": "DECIDED",
+      "source": "ENJOY_GANHOS_DECISOES_CONSOLIDADAS.md — 05/11/2026",
+      "updatedAt": null
+    },
+    {
+      "id": "ganhos-11",
+      "code": "11",
+      "title": "Escopo técnico do mock",
+      "description": "Atualizar Ganhos e mock indispensável, preservando os demais módulos. Mock não equivale a integração real nem homologação do PMS.",
+      "status": "DECIDED",
+      "source": "ENJOY_GANHOS_DECISOES_CONSOLIDADAS.md — 05/11/2026",
+      "updatedAt": null
+    }
+  ]
 }
