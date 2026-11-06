@@ -3,12 +3,16 @@
 <title>Decisões · Enjoy Financeiro</title>
 <style>
 :root{--green:#183d2e;--green2:#285e54;--mint:#eaf2ef;--bg:#f4f5f3;--border:#e2e6e3;--text:#1e2825;--muted:#71817b;font-family:Inter,system-ui,-apple-system,sans-serif;color:var(--text)}*{box-sizing:border-box}body{margin:0;background:var(--bg);padding:0 0 55px;font-size:14px}button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}.wrap{max-width:1200px;margin:auto}.intro{display:flex;align-items:start;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}.intro h2{margin:0 0 7px;font-size:22px;letter-spacing:-.03em}.intro p{margin:0;color:var(--muted);line-height:1.5}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid #cedbd5;background:white;border-radius:9px;padding:10px 14px;font-weight:650;min-height:40px;color:#25463b}.btn.primary{background:var(--green);color:white;border-color:var(--green)}.btn:hover{filter:brightness(.97)}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:18px 0}.tab{background:white;border:1px solid var(--border);color:#52635c;border-radius:9px;padding:12px 15px;font-weight:650}.tab.active{background:var(--mint);color:var(--green);border-color:#88b2a1}.count{font-size:11px;background:#edf0ee;border-radius:99px;padding:3px 8px;margin-left:5px}.tab.active .count{background:#d1e8dd}.toolbar{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}.search{border:1px solid var(--border);border-radius:9px;min-height:42px;padding:8px 12px;width:min(100%,350px);background:white}.sub{font-size:12px;color:var(--muted)}.panel{border:1px solid var(--border);border-radius:14px;background:white;overflow:hidden;box-shadow:0 3px 13px #172b1d08}.row{display:grid;grid-template-columns:60px 1fr 110px 156px;gap:16px;padding:17px 19px;align-items:start;border-bottom:1px solid #eef1ef}.row:last-child{border-bottom:0}.code{border-radius:7px;background:#f3f6f4;color:var(--green2);font-weight:750;padding:7px;text-align:center;font-size:12px}.record h3{font-size:14px;margin:1px 0 7px}.record p{font-size:13px;line-height:1.55;color:#59665f;margin:0}.meta{font-size:11px;color:#85918b;margin-top:8px}.pill{display:inline-block;border-radius:99px;padding:5px 9px;background:#eaf6f0;color:#23734e;font-size:11px;font-weight:800;white-space:nowrap}.pill.proposed{background:#fff2d9;color:#86620b}.pill.unknown{background:#f1f2f3;color:#6d7377}.buttons{display:flex;gap:6px;flex-wrap:wrap;justify-content:end}.small{padding:7px 9px;min-height:32px;font-size:12px}.empty{text-align:center;padding:55px 20px;color:var(--muted)}.empty strong{display:block;font-size:16px;color:var(--text);margin-bottom:8px}dialog{border:0;border-radius:14px;width:min(640px,calc(100vw - 24px));box-shadow:0 28px 80px #0004;padding:0;max-height:92vh}dialog::backdrop{background:#10201885}.modalhead{padding:20px 22px 12px;border-bottom:1px solid var(--border)}.modalhead h3{margin:0;font-size:19px}.modalbody{padding:20px 22px;display:grid;gap:13px;overflow:auto;max-height:67vh}.field{display:grid;gap:6px}.field label{font-size:12px;font-weight:750;color:#4c5e55}.field input,.field textarea,.field select{width:100%;border:1px solid #cbd6d0;border-radius:9px;padding:10px;background:white;color:var(--text)}.field textarea{resize:vertical;min-height:105px}.modalfoot{padding:15px 22px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)}.notice{margin:12px 0;color:var(--muted);font-size:12px;line-height:1.6}.message{min-height:20px;font-size:12px;color:#236e50}.warning{color:#8b5c12}@media(max-width:750px){.row{grid-template-columns:45px 1fr;gap:8px}.row .pill{justify-self:start}.buttons{justify-content:start}.intro h2{font-size:20px}}
+
+.json-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 15px;margin:0 0 16px;background:#fff;border:1px solid var(--border);border-radius:12px}.json-tools .path{font:12px ui-monospace,monospace;color:var(--green2);padding:5px 7px;background:var(--mint);border-radius:6px;margin-right:auto}.json-tools .btn{padding:8px 10px;min-height:35px;font-size:12px}.json-hint{font-size:12px;color:var(--muted);margin:0 0 16px;line-height:1.5}.unsaved{font-size:12px;color:#885f10}
 </style></head><body><div class="wrap">
-<header class="intro"><div><h2>Registro de decisões</h2><p>Especificações confirmadas, propostas e pendências por módulo financeiro.</p></div><div class="actions"><button class="btn" id="importBtn">Importar JSON</button><button class="btn" id="exportBtn">Exportar JSON</button><button class="btn primary" id="newBtn">+ Nova decisão</button></div></header>
+<header class="intro"><div><h2>Registro de decisões</h2><p>Especificações confirmadas, propostas e pendências por módulo financeiro.</p></div><div class="actions"><button class="btn primary" id="newBtn">+ Nova decisão</button></div></header>
 <nav class="tabs" id="tabs" aria-label="Módulos financeiros"></nav>
+<div class="json-tools"><span class="path" id="jsonPath">modulos/decisoes/despesas.json</span><button class="btn" id="loadFolderBtn">↻ Carregar JSON da pasta</button><button class="btn" id="openFileBtn">Abrir JSON local</button><button class="btn" id="saveFileBtn">Salvar no arquivo</button><button class="btn" id="importBtn">Importar JSON</button><button class="btn" id="exportBtn">Exportar JSON</button></div>
+<p class="json-hint" id="jsonHint">Cada aba possui seu próprio JSON versionável na pasta. Alterações são guardadas neste navegador até você salvar no arquivo ou exportar.</p>
 <div class="toolbar"><input class="search" id="search" type="search" placeholder="Buscar por código, título ou conteúdo…" aria-label="Buscar decisões"><span class="sub" id="summary"></span></div>
 <section class="panel" id="records" aria-live="polite"></section>
-<p class="notice">Dados salvos apenas neste navegador (localStorage). Exporte o JSON para fazer backup, compartilhar com outros chats ou transferir entre computadores. As decisões de Ganhos e dos demais módulos não foram presumidas.</p>
+<p class="notice">Cada aba possui um JSON próprio na pasta <code>modulos/decisoes/</code>. Os dados também são salvos neste navegador. Editar no GitHub atualiza o arquivo versionado; use “Carregar JSON da pasta” para trazer a versão publicada, sem sobrescrever automaticamente alterações locais.</p>
 <p class="message" id="message" role="status"></p>
 <input id="fileInput" type="file" accept=".json,application/json" hidden>
 <dialog id="editor"><form id="editorForm"><div class="modalhead"><h3 id="editorTitle">Nova decisão</h3></div><div class="modalbody">
@@ -21,49 +25,130 @@
 <div class="modalfoot"><button class="btn" type="button" id="cancelEdit">Cancelar</button><button class="btn primary" type="submit">Salvar decisão</button></div></form></dialog>
 <script>
 'use strict';
-const SEED={"schemaVersion": 1, "app": "enjoy-financeiro-decisoes", "exportedAt": null, "modules": {"visao-geral": [], "ganhos": [], "despesas": [{"id": "despesas-01", "code": "01", "title": "Despesas com itens e pagamentos independentes", "description": "Uma despesa admite um ou mais itens com soma automática e um ou mais pagamentos independentes, em contas e datas distintas.", "status": "DECIDED", "source": "Conversa de especificação — módulo Despesas", "updatedAt": null}, {"id": "despesas-02", "code": "02", "title": "Categoria e subcategoria opcional", "description": "Cada despesa pertence a uma categoria e pode ter subcategoria opcional. Cadastro de novas categorias apenas sob demanda, sem exigir categoria por item.", "status": "DECIDED", "source": "Conversa de especificação — módulo Despesas", "updatedAt": null}, {"id": "despesas-03", "code": "03", "title": "Pagamento opcional e progressivo", "description": "Cadastrar primeiro a despesa e seus itens; o pagamento pode ser registrado na hora ou posteriormente, inclusive de forma parcial. Nenhum pagamento é obrigatório no cadastro.", "status": "DECIDED", "source": "Conversa de especificação — módulo Despesas", "updatedAt": null}, {"id": "despesas-04", "code": "04", "title": "Preservar datas e filtros superiores", "description": "Manter o funcionamento existente dos filtros superiores e do período; não adicionar campos novos de datas ou vencimento por padrão. Corrigir apenas bugs comprovados.", "status": "DECIDED", "source": "Conversa de especificação — módulo Despesas", "updatedAt": null}, {"id": "despesas-05", "code": "05", "title": "Recorrências com pagamentos independentes", "description": "Manter frequências diária, semanal e mensal. Cada ocorrência tem itens, valores e pagamentos próprios, gerada sem pagamento registrado.", "status": "DECIDED", "source": "Conversa de especificação — módulo Despesas", "updatedAt": null}, {"id": "despesas-06", "code": "06", "title": "Recorrência semanal em múltiplos dias", "description": "Permitir escolher qualquer combinação dos dias da semana, com data de início e término; cada data gera ocorrência independente e sem duplicação.", "status": "DECIDED", "source": "Conversa de especificação — módulo Despesas", "updatedAt": null}, {"id": "despesas-07", "code": "07", "title": "Escopo de alterações de recorrência", "description": "Ao editar ou cancelar, oferecer: somente esta ocorrência; esta e futuras; ou toda a série, com proteção de pagamentos e histórico já registrados.", "status": "DECIDED", "source": "Conversa de especificação — módulo Despesas", "updatedAt": null}, {"id": "despesas-08", "code": "08", "title": "Cancelamento e exclusão protegida", "description": "Despesas sem pagamento podem ser excluídas com confirmação; com pagamento devem preservar histórico e permitir cancelamento/ajustes apropriados. Estorno deve ser explícito.", "status": "DECIDED", "source": "Conversa de especificação — módulo Despesas", "updatedAt": null}, {"id": "despesas-09", "code": "09", "title": "Sem anexos nesta etapa", "description": "Não implementar upload ou armazenamento de notas, recibos e comprovantes nesta etapa. Manter apenas dados e observações textuais.", "status": "DECIDED", "source": "Conversa de especificação — módulo Despesas", "updatedAt": null}, {"id": "despesas-10", "code": "10", "title": "Tabela tradicional de despesas", "description": "Manter listagem em tabela tradicional, sem expansão de linhas; ações específicas para visualizar e editar os lançamentos.", "status": "DECIDED", "source": "Conversa de especificação — módulo Despesas", "updatedAt": null}, {"id": "despesas-11", "code": "11", "title": "Modal de detalhes separado da edição", "description": "Ao selecionar uma despesa, abrir modal de consulta com dados, itens, pagamentos, saldos e ações para editar, pagar e cancelar/excluir conforme regras.", "status": "DECIDED", "source": "Conversa de especificação — módulo Despesas", "updatedAt": null}, {"id": "despesas-12", "code": "12", "title": "Status financeiro automático", "description": "Calcular Pendente, Parcial e Pago pelos pagamentos registrados; Cancelado é estado separado, aplicado explicitamente; não permitir ajuste manual arbitrário.", "status": "DECIDED", "source": "Conversa de especificação — módulo Despesas", "updatedAt": null}], "investimentos": []}};
-const KEY='enjoy.financeiro.decisoes.v1';
+const SEED={"schemaVersion":1,"app":"enjoy-financeiro-decisoes","exportedAt":null,"modules":{"visao-geral":[],"ganhos":[],"despesas":[{"id":"despesas-01","code":"01","title":"Despesas com itens e pagamentos independentes","description":"Uma despesa admite um ou mais itens com soma automática e um ou mais pagamentos independentes, em contas e datas distintas.","status":"DECIDED","source":"Conversa de especificação — módulo Despesas","updatedAt":null},{"id":"despesas-02","code":"02","title":"Categoria e subcategoria opcional","description":"Cada despesa pertence a uma categoria e pode ter subcategoria opcional. Cadastro de novas categorias apenas sob demanda, sem exigir categoria por item.","status":"DECIDED","source":"Conversa de especificação — módulo Despesas","updatedAt":null},{"id":"despesas-03","code":"03","title":"Pagamento opcional e progressivo","description":"Cadastrar primeiro a despesa e seus itens; o pagamento pode ser registrado na hora ou posteriormente, inclusive de forma parcial. Nenhum pagamento é obrigatório no cadastro.","status":"DECIDED","source":"Conversa de especificação — módulo Despesas","updatedAt":null},{"id":"despesas-04","code":"04","title":"Preservar datas e filtros superiores","description":"Manter o funcionamento existente dos filtros superiores e do período; não adicionar campos novos de datas ou vencimento por padrão. Corrigir apenas bugs comprovados.","status":"DECIDED","source":"Conversa de especificação — módulo Despesas","updatedAt":null},{"id":"despesas-05","code":"05","title":"Recorrências com pagamentos independentes","description":"Manter frequências diária, semanal e mensal. Cada ocorrência tem itens, valores e pagamentos próprios, gerada sem pagamento registrado.","status":"DECIDED","source":"Conversa de especificação — módulo Despesas","updatedAt":null},{"id":"despesas-06","code":"06","title":"Recorrência semanal em múltiplos dias","description":"Permitir escolher qualquer combinação dos dias da semana, com data de início e término; cada data gera ocorrência independente e sem duplicação.","status":"DECIDED","source":"Conversa de especificação — módulo Despesas","updatedAt":null},{"id":"despesas-07","code":"07","title":"Escopo de alterações de recorrência","description":"Ao editar ou cancelar, oferecer: somente esta ocorrência; esta e futuras; ou toda a série, com proteção de pagamentos e histórico já registrados.","status":"DECIDED","source":"Conversa de especificação — módulo Despesas","updatedAt":null},{"id":"despesas-08","code":"08","title":"Cancelamento e exclusão protegida","description":"Despesas sem pagamento podem ser excluídas com confirmação; com pagamento devem preservar histórico e permitir cancelamento/ajustes apropriados. Estorno deve ser explícito.","status":"DECIDED","source":"Conversa de especificação — módulo Despesas","updatedAt":null},{"id":"despesas-09","code":"09","title":"Sem anexos nesta etapa","description":"Não implementar upload ou armazenamento de notas, recibos e comprovantes nesta etapa. Manter apenas dados e observações textuais.","status":"DECIDED","source":"Conversa de especificação — módulo Despesas","updatedAt":null},{"id":"despesas-10","code":"10","title":"Tabela tradicional de despesas","description":"Manter listagem em tabela tradicional, sem expansão de linhas; ações específicas para visualizar e editar os lançamentos.","status":"DECIDED","source":"Conversa de especificação — módulo Despesas","updatedAt":null},{"id":"despesas-11","code":"11","title":"Modal de detalhes separado da edição","description":"Ao selecionar uma despesa, abrir modal de consulta com dados, itens, pagamentos, saldos e ações para editar, pagar e cancelar/excluir conforme regras.","status":"DECIDED","source":"Conversa de especificação — módulo Despesas","updatedAt":null},{"id":"despesas-12","code":"12","title":"Status financeiro automático","description":"Calcular Pendente, Parcial e Pago pelos pagamentos registrados; Cancelado é estado separado, aplicado explicitamente; não permitir ajuste manual arbitrário.","status":"DECIDED","source":"Conversa de especificação — módulo Despesas","updatedAt":null}],"investimentos":[]}};
+const KEY='enjoy.financeiro.decisoes.v2';
+const OLD_KEY='enjoy.financeiro.decisoes.v1';
 const NAMES={'visao-geral':'Visão Geral','ganhos':'Ganhos','despesas':'Despesas','investimentos':'Investimentos'};
 const MODULES=Object.keys(NAMES);
 const $=id=>document.getElementById(id);
 const clone=x=>JSON.parse(JSON.stringify(x));
 const clean=s=>String(s??'').trim();
-let data=load(); let active='despesas'; let editing=null;
-function load(){try{const raw=localStorage.getItem(KEY);if(raw){let obj=JSON.parse(raw);return validate(obj);}}catch(err){console.warn('Dados locais inválidos ou indisponíveis',err)}return clone(SEED)}
-function validate(obj){
- if(!obj||obj.schemaVersion!==1||obj.app!=='enjoy-financeiro-decisoes'||!obj.modules||typeof obj.modules!=='object')throw Error('Formato de JSON incompatível.');
- const out={schemaVersion:1,app:'enjoy-financeiro-decisoes',exportedAt:null,modules:{}};
- let total=0;
- for(const m of MODULES){const list=obj.modules[m]??[];if(!Array.isArray(list))throw Error('Lista inválida: '+m);out.modules[m]=list.map((r,i)=>{
- if(!r||typeof r!=='object'||typeof r.id!=='string'||!r.id||typeof r.title!=='string'||typeof r.description!=='string'||typeof r.code!=='string')throw Error('Registro inválido no módulo '+m+' (item '+(i+1)+').');
- if(r.title.length>500||r.description.length>30000||r.code.length>64)throw Error('Registro excede tamanho permitido.');
- const allowed=['DECIDED','PROPOSED','UNKNOWN','SUPERSEDED'];if(!allowed.includes(r.status))throw Error('Estado inválido em '+r.id);
- return {id:r.id,code:r.code,title:r.title,description:r.description,status:r.status,source:typeof r.source==='string'?r.source.slice(0,2000):'',updatedAt:typeof r.updatedAt==='string'?r.updatedAt:null};
- });total+=list.length;}
- if(total>5000)throw Error('JSON com decisões em excesso.');
- const ids=new Set();for(const m of MODULES)for(const item of out.modules[m]){if(ids.has(item.id))throw Error('ID duplicado: '+item.id);ids.add(item.id)}
+const paths=Object.fromEntries(MODULES.map(m=>[m,m+'.json']));
+let active='despesas',editing=null, fileHandle=null, data=load();
+function validateRecords(list,module){
+ if(!Array.isArray(list)||list.length>5000)throw Error('Lista de decisões inválida.');
+ const ids=new Set();
+ return list.map((r,i)=>{
+  if(!r||typeof r!=='object'||typeof r.id!=='string'||!r.id||typeof r.code!=='string'||typeof r.title!=='string'||typeof r.description!=='string')throw Error('Registro inválido na posição '+(i+1));
+  if(ids.has(r.id))throw Error('ID duplicado: '+r.id);ids.add(r.id);
+  if(r.title.length>500||r.description.length>30000||r.code.length>64)throw Error('Registro muito longo.');
+  if(!['DECIDED','PROPOSED','UNKNOWN','SUPERSEDED'].includes(r.status))throw Error('Status inválido: '+r.id);
+  return {id:r.id,code:r.code,title:r.title,description:r.description,status:r.status,source:typeof r.source==='string'?r.source.slice(0,2000):'',updatedAt:typeof r.updatedAt==='string'?r.updatedAt:null};
+ });
+}
+function validateModule(json,module){
+ if(!json||json.schemaVersion!==1||json.app!=='enjoy-financeiro-decisoes')throw Error('Formato de JSON incompatível.');
+ if(json.module&&json.module!==module)throw Error('Este arquivo pertence ao módulo '+json.module+'.');
+ const records=json.decisions ?? (json.modules&&json.modules[module]);
+ if(!records)throw Error('O JSON não contém decisões deste módulo.');
+ return validateRecords(records,module);
+}
+function validateLegacy(json){
+ if(!json||json.schemaVersion!==1||json.app!=='enjoy-financeiro-decisoes'||!json.modules)throw Error('Formato legado inválido.');
+ return Object.fromEntries(MODULES.map(m=>[m,validateRecords(json.modules[m]??[],m)]));
+}
+function load(){
+ let out=clone(SEED.modules);
+ try{
+  const legacy=localStorage.getItem(OLD_KEY);
+  if(legacy){const previous=validateLegacy(JSON.parse(legacy));for(const m of MODULES){const map=new Map(out[m].map(x=>[x.id,x]));for(const r of previous[m])map.set(r.id,r);out[m]=[...map.values()]}}
+  const saved=localStorage.getItem(KEY);
+  if(saved){const val=JSON.parse(saved);for(const m of MODULES){if(val[m])out[m]=validateRecords(val[m],m)}}
+ }catch(e){console.warn('Falha ao restaurar decisões locais',e)}
  return out;
 }
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(err){notify('Não foi possível salvar no navegador. Exporte um JSON para preservar as alterações.',true);return false}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(e){notify('Não foi possível salvar no navegador. Exporte o JSON.',true);return false}}
 function notify(s,w=false){$('message').textContent=s;$('message').className='message'+(w?' warning':'')}
-function el(tag,cls,txt){const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n}
+function el(tag,cls,txt){const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x}
+function payload(module=active){return {schemaVersion:1,app:'enjoy-financeiro-decisoes',module,decisions:clone(data[module])}}
 function render(){
- const tabs=$('tabs');tabs.replaceChildren();for(const m of MODULES){const btn=el('button','tab'+(active===m?' active':''));btn.type='button';btn.setAttribute('aria-current',active===m?'page':'false');btn.append(document.createTextNode(NAMES[m]+' '),el('span','count',String(data.modules[m].length)));btn.onclick=()=>{active=m;render()};tabs.append(btn)}
- const q=clean($('search').value).toLocaleLowerCase('pt-BR');const list=data.modules[active].filter(r=>[r.code,r.title,r.description,r.source].some(s=>s.toLocaleLowerCase('pt-BR').includes(q)));
- $('summary').textContent=list.length+' de '+data.modules[active].length+' registros';const parent=$('records');parent.replaceChildren();
- if(!list.length){const none=el('div','empty');none.append(el('strong','',q?'Nenhum resultado':'Nenhuma decisão registrada'),el('span','',q?'Experimente outra busca.':'Cadastre uma decisão ou importe um JSON.'));parent.append(none);return}
- for(const r of list){const row=el('article','row');row.append(el('div','code',r.code));const content=el('div','record');content.append(el('h3','',r.title),el('p','',r.description));if(r.source)content.append(el('div','meta','Fonte: '+r.source));row.append(content);
- const statuses={DECIDED:'Aprovada',PROPOSED:'Proposta',UNKNOWN:'Pendente',SUPERSEDED:'Substituída'};row.append(el('span','pill '+(r.status==='PROPOSED'?'proposed':r.status==='UNKNOWN'||r.status==='SUPERSEDED'?'unknown':''),statuses[r.status]));
- const acts=el('div','buttons');const edit=el('button','btn small','Editar');edit.onclick=()=>openEditor(r);const del=el('button','btn small','Excluir');del.onclick=()=>removeRecord(r);acts.append(edit,del);row.append(acts);parent.append(row)}
+ $('jsonPath').textContent='modulos/decisoes/'+paths[active];
+ const tabs=$('tabs');tabs.replaceChildren();
+ for(const m of MODULES){const btn=el('button','tab'+(active===m?' active':''));btn.type='button';btn.append(document.createTextNode(NAMES[m]+' '),el('span','count',String(data[m].length)));btn.setAttribute('aria-current',m===active?'page':'false');btn.onclick=()=>{active=m;fileHandle=null;render()};tabs.append(btn)}
+ const q=clean($('search').value).toLocaleLowerCase('pt-BR');
+ const list=data[active].filter(r=>[r.code,r.title,r.description,r.source].some(v=>String(v??'').toLocaleLowerCase('pt-BR').includes(q)));
+ $('summary').textContent=list.length+' de '+data[active].length+' registros';$('records').replaceChildren();
+ if(!list.length){const n=el('div','empty');n.append(el('strong','',q?'Nenhum resultado':'Nenhuma decisão registrada'),el('span','',q?'Experimente outra busca.':'Cadastre uma decisão ou carregue um JSON.'));$('records').append(n);return}
+ for(const r of list){
+  const row=el('article','row');row.append(el('div','code',r.code));
+  const content=el('div','record');content.append(el('h3','',r.title),el('p','',r.description));if(r.source)content.append(el('div','meta','Fonte: '+r.source));row.append(content);
+  const status={DECIDED:'Aprovada',PROPOSED:'Proposta',UNKNOWN:'Pendente',SUPERSEDED:'Substituída'};row.append(el('span','pill '+(r.status==='PROPOSED'?'proposed':r.status==='DECIDED'?'':'unknown'),status[r.status]));
+  const actions=el('div','buttons'),edit=el('button','btn small','Editar'),del=el('button','btn small','Excluir');
+  edit.onclick=()=>openEditor(r);del.onclick=()=>{if(!confirm('Excluir esta decisão do navegador?'))return;data[active]=data[active].filter(x=>x.id!==r.id);persist();render();notify('Excluída localmente; salve/exporte o JSON para refletir no arquivo.')};actions.append(edit,del);row.append(actions);$('records').append(row)
+ }
 }
-function openEditor(r){editing=r?.id||null;$('editorTitle').textContent=r?'Editar decisão':'Nova decisão';$('module').value=r?findModule(r.id):active;$('code').value=r?.code??String(data.modules[active].length+1).padStart(2,'0');$('title').value=r?.title??'';$('description').value=r?.description??'';$('status').value=r?.status??'PROPOSED';$('source').value=r?.source??'';$('editor').showModal();}
-function findModule(id){return MODULES.find(m=>data.modules[m].some(r=>r.id===id))||active}
-function removeRecord(r){if(!confirm('Excluir a decisão "'+r.title+'"? Esta ação pode ser desfeita importando um backup JSON.'))return;data.modules[active]=data.modules[active].filter(x=>x.id!==r.id);persist();render();notify('Registro excluído do painel local.')}
-$('editorForm').addEventListener('submit',event=>{event.preventDefault();const module=$('module').value;const code=clean($('code').value);const title=clean($('title').value);const description=clean($('description').value);if(!MODULES.includes(module)||!code||!title||!description){notify('Preencha os campos obrigatórios.',true);return}
- const previous=editing?findModule(editing):null;const id=editing||module+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,9);const record={id,code,title,description,status:$('status').value,source:clean($('source').value),updatedAt:new Date().toISOString()};if(previous)data.modules[previous]=data.modules[previous].filter(x=>x.id!==id);data.modules[module].push(record);active=module;persist();$('editor').close();render();notify('Decisão salva no painel local.');});
+function findModule(id){return MODULES.find(m=>data[m].some(r=>r.id===id))||active}
+function openEditor(r){
+ editing=r?.id||null;$('editorTitle').textContent=r?'Editar decisão':'Nova decisão';$('module').value=r?findModule(r.id):active;
+ $('code').value=r?.code??String(data[active].length+1).padStart(2,'0');$('title').value=r?.title??'';$('description').value=r?.description??'';$('status').value=r?.status??'PROPOSED';$('source').value=r?.source??'';$('editor').showModal()
+}
+$('editorForm').addEventListener('submit',ev=>{
+ ev.preventDefault();const module=$('module').value,code=clean($('code').value),title=clean($('title').value),description=clean($('description').value);
+ if(!MODULES.includes(module)||!code||!title||!description)return notify('Preencha os campos obrigatórios.',true);
+ const previous=editing?findModule(editing):null,id=editing||module+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,9);
+ const record={id,code,title,description,status:$('status').value,source:clean($('source').value),updatedAt:new Date().toISOString()};
+ if(previous)data[previous]=data[previous].filter(r=>r.id!==id);
+ data[module].push(record);active=module;fileHandle=null;persist();$('editor').close();render();notify('Salvo no navegador. Use “Salvar no arquivo” ou “Exportar JSON” para atualizar o documento.')
+});
+function downloadModule(){
+ const blob=new Blob([JSON.stringify(payload(),null,2)+'\n'],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=paths[active];a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('JSON de '+NAMES[active]+' exportado.')
+}
+async function applyFile(file,replace=true){
+ if(file.size>5000000)throw Error('Arquivo maior que 5 MB.');
+ const json=JSON.parse(await file.text());const incoming=validateModule(json,active);
+ if(!confirm('Substituir as '+data[active].length+' decisões locais de '+NAMES[active]+' pelas '+incoming.length+' decisões desse JSON?'))return;
+ data[active]=incoming;persist();render();notify('JSON de '+NAMES[active]+' carregado.')
+}
+$('loadFolderBtn').onclick=async()=>{
+ const module=active;
+ if(location.protocol==='file:')return notify('Abertura direta do disco: use “Abrir JSON local” para carregar o arquivo da pasta.',true);
+ try{
+ const response=await fetch(paths[module],{cache:'no-store'});
+ if(!response.ok)throw Error('HTTP '+response.status);
+ const incoming=validateModule(await response.json(),module);
+ if(!confirm('Carregar '+incoming.length+' decisões do JSON publicado na pasta? Isso substitui os dados locais desta aba.'))return;
+ data[module]=incoming;persist();render();notify('Carregado da pasta: '+paths[module]);
+ }catch(err){notify('Falha ao carregar JSON da pasta: '+err.message+'. Use “Abrir JSON local”.',true)}
+};
+$('openFileBtn').onclick=()=>{
+ $('fileInput').dataset.kind='open';
+ $('fileInput').click();
+};
+$('importBtn').onclick=()=>{$('fileInput').dataset.kind='import';$('fileInput').click()};
+$('fileInput').onchange=async ev=>{
+ const file=ev.target.files?.[0],kind=ev.target.dataset.kind;ev.target.value='';if(!file)return;
+ try{
+  const json=JSON.parse(await file.text()),incoming=validateModule(json,active);
+  if(kind==='import'){
+   if(!confirm('Importar '+incoming.length+' decisões para '+NAMES[active]+'? Itens com o mesmo ID serão atualizados.'))return;
+   const map=new Map(data[active].map(r=>[r.id,r]));for(const r of incoming)map.set(r.id,r);data[active]=[...map.values()];persist();render();notify('JSON importado e mesclado no navegador.')
+  }else{
+   if(!confirm('Substituir dados locais desta aba pelo JSON selecionado?'))return;
+   data[active]=incoming;persist();render();notify('Arquivo JSON carregado no navegador.')
+  }
+ }catch(err){notify('Erro ao abrir JSON: '+err.message,true)}
+};
+$('saveFileBtn').onclick=async()=>{
+ if(typeof window.showSaveFilePicker!=='function'){downloadModule();notify('Seu navegador não permite escrita direta. JSON exportado; substitua o arquivo da pasta manualmente.');return}
+ try{
+ const handle=await window.showSaveFilePicker({suggestedName:paths[active],types:[{description:'JSON',accept:{'application/json':['.json']}}]});
+ const stream=await handle.createWritable();await stream.write(JSON.stringify(payload(),null,2)+'\n');await stream.close();
+ fileHandle=handle;notify('Arquivo salvo. Se desejar que apareça no GitHub, faça commit do JSON atualizado.')
+ }catch(err){if(err.name!=='AbortError')notify('Não foi possível salvar: '+err.message,true)}
+};
+$('exportBtn').onclick=downloadModule;
 $('newBtn').onclick=()=>openEditor(null);$('cancelEdit').onclick=()=>$('editor').close();$('search').addEventListener('input',render);
-$('exportBtn').onclick=()=>{const obj=clone(data);obj.exportedAt=new Date().toISOString();const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='enjoy-financeiro-decisoes.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('JSON exportado.')};
-$('importBtn').onclick=()=>$('fileInput').click();$('fileInput').addEventListener('change',async ev=>{const file=ev.target.files?.[0];ev.target.value='';if(!file)return;try{if(file.size>5_000_000)throw Error('Arquivo maior que 5 MB.');const incoming=validate(JSON.parse(await file.text()));const num=MODULES.reduce((s,m)=>s+incoming.modules[m].length,0);if(!confirm('Importar '+num+' decisões? IDs repetidos serão atualizados; os demais registros atuais serão preservados.'))return;
- for(const m of MODULES){const map=new Map(data.modules[m].map(r=>[r.id,r]));for(const r of incoming.modules[m])map.set(r.id,r);data.modules[m]=Array.from(map.values())}data=validate(data);persist();render();notify('Importação concluída ('+num+' registros recebidos).')}catch(err){notify('Falha na importação: '+err.message,true)}});
-for(const m of MODULES){const op=document.createElement('option');op.value=m;op.textContent=NAMES[m];$('module').append(op)}render();
+for(const m of MODULES){const opt=document.createElement('option');opt.value=m;opt.textContent=NAMES[m];$('module').append(opt)}render();
+
 </script></div></body></html>
