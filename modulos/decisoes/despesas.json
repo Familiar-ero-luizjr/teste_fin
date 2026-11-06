@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "app": "enjoy-financeiro-decisoes",
+  "module": "despesas",
+  "decisions": [
+    {
+      "id": "despesas-01",
+      "code": "01",
+      "title": "Despesas com itens e pagamentos independentes",
+      "description": "Uma despesa admite um ou mais itens com soma automática e um ou mais pagamentos independentes, em contas e datas distintas.",
+      "status": "DECIDED",
+      "source": "Conversa de especificação — módulo Despesas",
+      "updatedAt": null
+    },
+    {
+      "id": "despesas-02",
+      "code": "02",
+      "title": "Categoria e subcategoria opcional",
+      "description": "Cada despesa pertence a uma categoria e pode ter subcategoria opcional. Cadastro de novas categorias apenas sob demanda, sem exigir categoria por item.",
+      "status": "DECIDED",
+      "source": "Conversa de especificação — módulo Despesas",
+      "updatedAt": null
+    },
+    {
+      "id": "despesas-03",
+      "code": "03",
+      "title": "Pagamento opcional e progressivo",
+      "description": "Cadastrar primeiro a despesa e seus itens; o pagamento pode ser registrado na hora ou posteriormente, inclusive de forma parcial. Nenhum pagamento é obrigatório no cadastro.",
+      "status": "DECIDED",
+      "source": "Conversa de especificação — módulo Despesas",
+      "updatedAt": null
+    },
+    {
+      "id": "despesas-04",
+      "code": "04",
+      "title": "Preservar datas e filtros superiores",
+      "description": "Manter o funcionamento existente dos filtros superiores e do período; não adicionar campos novos de datas ou vencimento por padrão. Corrigir apenas bugs comprovados.",
+      "status": "DECIDED",
+      "source": "Conversa de especificação — módulo Despesas",
+      "updatedAt": null
+    },
+    {
+      "id": "despesas-05",
+      "code": "05",
+      "title": "Recorrências com pagamentos independentes",
+      "description": "Manter frequências diária, semanal e mensal. Cada ocorrência tem itens, valores e pagamentos próprios, gerada sem pagamento registrado.",
+      "status": "DECIDED",
+      "source": "Conversa de especificação — módulo Despesas",
+      "updatedAt": null
+    },
+    {
+      "id": "despesas-06",
+      "code": "06",
+      "title": "Recorrência semanal em múltiplos dias",
+      "description": "Permitir escolher qualquer combinação dos dias da semana, com data de início e término; cada data gera ocorrência independente e sem duplicação.",
+      "status": "DECIDED",
+      "source": "Conversa de especificação — módulo Despesas",
+      "updatedAt": null
+    },
+    {
+      "id": "despesas-07",
+      "code": "07",
+      "title": "Escopo de alterações de recorrência",
+      "description": "Ao editar ou cancelar, oferecer: somente esta ocorrência; esta e futuras; ou toda a série, com proteção de pagamentos e histórico já registrados.",
+      "status": "DECIDED",
+      "source": "Conversa de especificação — módulo Despesas",
+      "updatedAt": null
+    },
+    {
+      "id": "despesas-08",
+      "code": "08",
+      "title": "Cancelamento e exclusão protegida",
+      "description": "Despesas sem pagamento podem ser excluídas com confirmação; com pagamento devem preservar histórico e permitir cancelamento/ajustes apropriados. Estorno deve ser explícito.",
+      "status": "DECIDED",
+      "source": "Conversa de especificação — módulo Despesas",
+      "updatedAt": null
+    },
+    {
+      "id": "despesas-09",
+      "code": "09",
+      "title": "Sem anexos nesta etapa",
+      "description": "Não implementar upload ou armazenamento de notas, recibos e comprovantes nesta etapa. Manter apenas dados e observações textuais.",
+      "status": "DECIDED",
+      "source": "Conversa de especificação — módulo Despesas",
+      "updatedAt": null
+    },
+    {
+      "id": "despesas-10",
+      "code": "10",
+      "title": "Tabela tradicional de despesas",
+      "description": "Manter listagem em tabela tradicional, sem expansão de linhas; ações específicas para visualizar e editar os lançamentos.",
+      "status": "DECIDED",
+      "source": "Conversa de especificação — módulo Despesas",
+      "updatedAt": null
+    },
+    {
+      "id": "despesas-11",
+      "code": "11",
+      "title": "Modal de detalhes separado da edição",
+      "description": "Ao selecionar uma despesa, abrir modal de consulta com dados, itens, pagamentos, saldos e ações para editar, pagar e cancelar/excluir conforme regras.",
+      "status": "DECIDED",
+      "source": "Conversa de especificação — módulo Despesas",
+      "updatedAt": null
+    },
+    {
+      "id": "despesas-12",
+      "code": "12",
+      "title": "Status financeiro automático",
+      "description": "Calcular Pendente, Parcial e Pago pelos pagamentos registrados; Cancelado é estado separado, aplicado explicitamente; não permitir ajuste manual arbitrário.",
+      "status": "DECIDED",
+      "source": "Conversa de especificação — módulo Despesas",
+      "updatedAt": null
+    }
+  ]
+}
