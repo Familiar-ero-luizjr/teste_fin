@@ -47,7 +47,7 @@ let kind='decisions',active='despesas',editing=null;
 const keys=()=>kind==='decisions'?active+'.json':'requisitos-'+active+'.json';
 function empty(){return Object.fromEntries(MODULES.map(m=>[m,[]]))}
 const data={decisions:empty(),requirements:empty()};
-const hasLocal={decisions:empty(),requirements:empty()};
+const hasLocal={decisions:Object.fromEntries(MODULES.map(m=>[m,false])),requirements:Object.fromEntries(MODULES.map(m=>[m,false]))};
 function validate(list,module,type){
  if(!Array.isArray(list)||list.length>5000)throw Error('Lista JSON inválida');
  const ids=new Set();
